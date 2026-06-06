@@ -1,4 +1,22 @@
-import type { DependencyEdge } from '../types/registry';
+import type { DependencyEdge, DetailArtifact } from '../types/registry';
+
+/** Derive dependency edges from per-artifact `requires` (the engine emits dependencies this
+ *  way; there is no `dependencyClosure` in the detail JSON). A bare ref ("name") resolves to the
+ *  owning bundle; a "bundle/name" ref is used as-is. */
+export function edgesFromArtifacts(
+  bundle: string,
+  artifacts: readonly DetailArtifact[],
+): DependencyEdge[] {
+  const edges: DependencyEdge[] = [];
+  for (const a of artifacts) {
+    const from = `${bundle}/${a.name}`;
+    for (const req of a.requires ?? []) {
+      const to = req.ref.includes('/') ? req.ref : `${bundle}/${req.ref}`;
+      edges.push({ from, to });
+    }
+  }
+  return edges;
+}
 
 /** Maps node → sorted direct dependencies. Every referenced node is a key. */
 export function buildAdjacency(edges: readonly DependencyEdge[]): Map<string, string[]> {

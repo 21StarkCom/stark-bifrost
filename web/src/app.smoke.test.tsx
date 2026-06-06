@@ -37,7 +37,7 @@ describe('SPA smoke', () => {
   it('degrades gracefully (never blank) on a bumped schemaVersion index', async () => {
     vi.stubGlobal('fetch', routedFetch(skewed, detailFixture));
     render(<App />);
-    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('status')).toBeInTheDocument());
     // the degraded view points the user to the GitHub source (link, precise over text match)
     expect(screen.getByRole('link', { name: /github/i })).toBeInTheDocument();
     // assert we did NOT render the search heading

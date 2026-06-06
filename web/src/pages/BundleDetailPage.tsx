@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { loadBundleDetail, type DetailResult } from '../data/registry';
-import { outputPathFor, type DetailArtifact, type Runtime } from '../types/registry';
+import {
+  outputPathFor,
+  type DetailArtifact,
+  type Runtime,
+  type SupportLevel,
+  type SupportMatrix,
+} from '../types/registry';
 import { SupportBadges } from '../components/SupportBadges';
 import { InstallInstructions } from '../components/InstallInstructions';
 import { DependencyGraph } from '../components/DependencyGraph';
+import { edgesFromArtifacts } from '../graph/deps';
 import { DegradedPage } from './DegradedPage';
 
 const RUNTIME_ORDER: readonly Runtime[] = ['claude', 'codex', 'gemini'];
@@ -24,7 +31,25 @@ function OutputPaths({ artifact }: { readonly artifact: DetailArtifact }): JSX.E
   );
 }
 
-const SOURCE_TREE = 'https://github.com/GetEvinced/stark-marketplace/tree/main/';
+// Aggregate whole-bundle support from the artifacts (the engine emits no bundle-level support):
+// a runtime is shown only if some artifact targets it; native only if EVERY targeting artifact
+// is native, otherwise emulated. This keeps the bundle install block honest vs. per-artifact badges.
+function aggregateBundleSupport(artifacts: readonly DetailArtifact[]): SupportMatrix {
+  const out: Partial<Record<Runtime, SupportLevel>> = {};
+  for (const rt of RUNTIME_ORDER) {
+    let any = false;
+    let allNative = true;
+    for (const a of artifacts) {
+      const lvl = a.support[rt];
+      if (lvl === 'native' || lvl === 'emulated') {
+        any = true;
+        if (lvl !== 'native') allNative = false;
+      }
+    }
+    if (any) out[rt] = allNative ? 'native' : 'emulated';
+  }
+  return out;
+}
 
 export function BundleDetailPage(): JSX.Element {
   const { name } = useParams<{ name: string }>();
@@ -40,33 +65,34 @@ export function BundleDetailPage(): JSX.Element {
   if (state === 'loading') return <main aria-busy="true">Loading bundle…</main>;
   if (state.kind === 'degraded') return <DegradedPage reason={state.reason} githubUrl={state.githubUrl} />;
 
-  const { bundle, artifacts, dependencyClosure } = state.detail;
+  const { bundle, artifacts } = state.detail;
+  const edges = edgesFromArtifacts(bundle.name, artifacts);
   return (
     <main>
       <p><Link to="/">← back to search</Link></p>
       <h1>{bundle.name}</h1>
-      <p>{bundle.description}</p>
-      <p>v{bundle.version} · {bundle.maturity} · {bundle.category}</p>
+      {bundle.description ? <p>{bundle.description}</p> : null}
+      <p>v{bundle.version}{bundle.maturity ? ` · ${bundle.maturity}` : ''}{bundle.category ? ` · ${bundle.category}` : ''}</p>
       {bundle.homepage ? <a href={bundle.homepage}>source on GitHub</a> : null}
 
       <h2>Install (whole bundle)</h2>
-      <InstallInstructions bundle={bundle.name} support={{ claude: 'native', codex: 'native', gemini: 'native' }} />
+      <InstallInstructions bundle={bundle.name} support={aggregateBundleSupport(artifacts)} headingLevel={3} />
 
       <h2>Artifacts</h2>
       {artifacts.map((a) => (
         <article key={a.name}>
           <h3>{a.name} <span className="type">{a.type}</span></h3>
-          <p>{a.description}</p>
+          {a.description ? <p>{a.description}</p> : null}
           <SupportBadges support={a.support} />
           <h4>Output paths</h4>
           <OutputPaths artifact={a} />
-          <InstallInstructions bundle={bundle.name} artifact={a.name} type={a.type} support={a.support} />
-          <a href={`${SOURCE_TREE}${a.sourcePath}`}>{a.sourcePath}</a>
+          <InstallInstructions bundle={bundle.name} artifact={a.name} type={a.type} support={a.support} headingLevel={4} />
+          {bundle.homepage ? <a href={bundle.homepage}>{a.name} source on GitHub</a> : null}
         </article>
       ))}
 
       <h2>Dependencies</h2>
-      <DependencyGraph edges={dependencyClosure} />
+      <DependencyGraph edges={edges} />
     </main>
   );
 }

@@ -30,20 +30,23 @@ export function filterArtifacts(
 ): readonly LeanArtifact[] {
   const q = f.query.trim().toLowerCase();
   return artifacts.filter((a) => {
+    // Engine `omitempty` fields may be absent — default defensively so a tag-less or
+    // description-less artifact never crashes or mis-filters the search.
+    const tags = a.tags ?? [];
     // Deprecated excluded from default search (spec §11) unless explicitly chosen.
     if (a.maturity === 'deprecated' && f.maturity !== 'deprecated') return false;
     if (f.type && a.type !== f.type) return false;
     if (f.category && a.category !== f.category) return false;
     if (f.maturity && a.maturity !== f.maturity) return false;
-    if (f.tag && !a.tags.includes(f.tag)) return false;
+    if (f.tag && !tags.includes(f.tag)) return false;
     if (f.runtime && !supportedOn(a, f.runtime)) return false;
-    if (q && !`${a.name} ${a.description}`.toLowerCase().includes(q)) return false;
+    if (q && !`${a.name} ${a.description ?? ''}`.toLowerCase().includes(q)) return false;
     return true;
   });
 }
 
-const uniqueSorted = <T extends string>(xs: readonly T[]): readonly T[] =>
-  [...new Set(xs)].sort();
+const uniqueSorted = <T extends string>(xs: readonly (T | undefined)[]): readonly T[] =>
+  [...new Set(xs.filter((x): x is T => x !== undefined))].sort();
 
 export function collectFacets(artifacts: readonly LeanArtifact[]): FacetValues {
   const runtimes = RUNTIME_ORDER.filter((rt) =>
@@ -51,7 +54,7 @@ export function collectFacets(artifacts: readonly LeanArtifact[]): FacetValues {
   );
   return {
     types: uniqueSorted(artifacts.map((a) => a.type)),
-    tags: uniqueSorted(artifacts.flatMap((a) => a.tags)),
+    tags: uniqueSorted(artifacts.flatMap((a) => a.tags ?? [])),
     categories: uniqueSorted(artifacts.map((a) => a.category)),
     runtimes,
     maturities: uniqueSorted(artifacts.map((a) => a.maturity)),

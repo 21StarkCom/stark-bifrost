@@ -17,6 +17,15 @@
   same SSO check. There is **no anonymous origin** and **no app-level user store**;
   identity is the proxy's job.
 
+## Routing (no server rewrite needed)
+
+The SPA uses **hash routing** (`HashRouter`): every route lives under `/#/…` on the single root
+`index.html`, with assets referenced by a relative base. A deep link like
+`…/#/bundle/stark-gh` therefore loads the root document and its hashed assets directly — the
+dumb static origin needs **no SPA-fallback rewrite rule**, and a shared/refreshed deep link
+never 404s its assets. (If you ever switch to history routing, the origin MUST rewrite unknown
+paths to `/index.html` and serve a root-anchored asset base — call that out here first.)
+
 ## Caching (atomic unit)
 
 - `assets/*` (content-hashed): `Cache-Control: public, max-age=31536000, immutable`.

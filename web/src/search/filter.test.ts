@@ -51,3 +51,24 @@ describe('collectFacets', () => {
     expect(f.runtimes).toEqual(['claude', 'codex', 'gemini']);
   });
 });
+
+// Forward-compat: the engine emits tags/category/maturity/description with omitempty, so an
+// artifact may legitimately omit them. The pure search functions must not crash or inject
+// undefined facet values.
+describe('forward-compat with omitempty fields absent', () => {
+  const sparse = [
+    { name: 'bare', type: 'command' as const, bundle: 'b', version: '1', support: { claude: 'native' as const } },
+  ];
+  it('filterArtifacts does not crash on a tag-less artifact (tag facet active)', () => {
+    expect(filterArtifacts(sparse, { ...empty, tag: 'anything' })).toEqual([]);
+    expect(filterArtifacts(sparse, empty).length).toBe(1);
+    expect(filterArtifacts(sparse, { ...empty, query: 'bare' }).length).toBe(1);
+  });
+  it('collectFacets omits undefined values from sparse rows', () => {
+    const f = collectFacets(sparse);
+    expect(f.tags).toEqual([]);
+    expect(f.categories).toEqual([]);
+    expect(f.maturities).toEqual([]);
+    expect(f.types).toEqual(['command']);
+  });
+});

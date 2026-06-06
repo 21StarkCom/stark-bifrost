@@ -29,14 +29,16 @@ describe('BundleDetailPage', () => {
     expect(screen.getAllByText(/\/plugin install stark-review/).length).toBeGreaterThan(0);
     // derived display output path (CC-3: outputs[rt][0].path), not a flat outputPaths map
     expect(screen.getByText('skills/stark-review/SKILL.md')).toBeInTheDocument();
-    // deep link to GitHub source for an artifact
-    const link = screen.getByRole('link', { name: /catalog\/stark-review\/skills\/stark-review.md/ });
+    // deep link to GitHub source (derived from bundle.homepage — the engine emits no per-artifact sourcePath)
+    const link = screen.getByRole('link', { name: /stark-review source on GitHub/ });
     expect(link).toHaveAttribute('href', expect.stringContaining('github.com/GetEvinced/stark-marketplace'));
+    // dependency edge derived from per-artifact requires (no engine `dependencyClosure`)
+    expect(screen.getByText(/stark-review\/stark-review → stark-review\/stark-session/)).toBeInTheDocument();
   });
 
   it('shows the degraded view on a fetch failure', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 503, json: async () => null } as Response));
     renderAt('/bundle/stark-review');
-    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('status')).toBeInTheDocument());
   });
 });

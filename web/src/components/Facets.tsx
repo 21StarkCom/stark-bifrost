@@ -11,6 +11,7 @@ export function FacetControls({ values, facets, onChange }: Props): JSX.Element 
     <div className="facets">
       <input
         type="search"
+        aria-label="Search artifacts"
         placeholder="Search artifacts…"
         value={facets.query}
         onChange={(e) => onChange({ ...facets, query: e.target.value })}

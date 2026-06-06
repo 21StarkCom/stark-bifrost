@@ -16,7 +16,11 @@ npm run build        # tsc --noEmit && vite build → dist/ (hashed assets)
 ```
 
 To run `dev`/`preview` against real data, copy a built `index.json` + `bundles/` into
-`web/public/` (CI does this from the committed engine output at deploy time).
+`web/public/` (Vite serves `public/` at the root in dev). **In CI this is different:** the
+deploy workflow copies `index.json` + `bundles/` into `web/dist/` *after* `vite build` (not
+`public/`, which is only consulted at build time) so the published unit is hashed-assets +
+index together. Routing uses `HashRouter`, so deep links (`/#/bundle/<name>`) need no
+server-side rewrite on the static origin.
 
 ## Data contract
 
