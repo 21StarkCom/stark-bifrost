@@ -88,6 +88,30 @@ func TestImportSubsetMissingSkillErrors(t *testing.T) {
 	}
 }
 
+// The subset is imported in the order given (not sorted), and a duplicate name is a
+// hard error (fail-closed — avoids writing a bundle with duplicate artifacts).
+func TestImportSubsetOrderAndDuplicates(t *testing.T) {
+	res, err := Import(Options{
+		From: "testdata/stark-skills", Bundle: "demo-skills",
+		Skills: []string{"demo-release", "demo-review"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Bundle.Artifacts) != 2 ||
+		res.Bundle.Artifacts[0].Name != "demo-release" ||
+		res.Bundle.Artifacts[1].Name != "demo-review" {
+		t.Fatalf("subset order not preserved: %v",
+			[]string{res.Bundle.Artifacts[0].Name, res.Bundle.Artifacts[1].Name})
+	}
+	if _, err := Import(Options{
+		From: "testdata/stark-skills", Bundle: "demo-skills",
+		Skills: []string{"demo-review", "demo-review"},
+	}); err == nil {
+		t.Fatal("duplicate skill in the subset must error")
+	}
+}
+
 // A bundle with no matching plugins/<bundle> pulls only skills — the stark-gh plugin
 // must NOT leak in (regression guard for the de-hardcoded plugin path).
 func TestImportPluginDecoupledFromSkillBundle(t *testing.T) {

@@ -70,7 +70,12 @@ func importSkills(from, bundle string, only []string, res *ImportResult) error {
 	skillRoot := filepath.Join(from, "skill")
 
 	if len(only) > 0 {
+		seen := make(map[string]bool, len(only))
 		for _, name := range only {
+			if seen[name] {
+				return fmt.Errorf("skill %q: duplicated in the requested set", name)
+			}
+			seen[name] = true
 			path := filepath.Join(skillRoot, name, "SKILL.md")
 			if _, err := os.Stat(path); err != nil {
 				return fmt.Errorf("skill %q: not found under %s (%w)", name, skillRoot, err)
