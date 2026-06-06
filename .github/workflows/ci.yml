@@ -48,14 +48,22 @@ jobs:
       GITLEAKS_VERSION: 8.30.1
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so the PR-range scan below can diff base..head
       - name: install gitleaks (pinned CLI)
         run: |
           curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" -o gitleaks.tar.gz
           tar -xzf gitleaks.tar.gz gitleaks
           sudo install gitleaks /usr/local/bin/gitleaks
           gitleaks version
-      - name: gitleaks (repo-wide, fail-closed)
+      - name: gitleaks — working tree (fail-closed)
         run: gitleaks dir . --config .gitleaks.toml --redact --exit-code 1 --verbose
+      - name: gitleaks — PR commit history (catches a secret added then removed within the PR)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: gitleaks git . --config .gitleaks.toml --redact --exit-code 1 --log-opts "${BASE_SHA}..${HEAD_SHA}"
 
   web:
     name: web build

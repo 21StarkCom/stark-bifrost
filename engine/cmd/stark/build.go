@@ -83,11 +83,13 @@ func newBuildCmd() *cobra.Command {
 			_ = fix // --fix is the explicit alias for the default write behavior
 			// repoRoot (where generated output lives) is the catalog dir's parent, so
 			// `build [../catalog]` works from any CWD — e.g. CI runs it from engine/.
+			// Clean first so a trailing slash (`catalog/`, common from tab-completion)
+			// doesn't make Dir return the catalog dir itself instead of its parent.
 			catalogDir := "catalog"
 			if len(args) == 1 {
 				catalogDir = args[0]
 			}
-			code := runBuild(catalogDir, filepath.Dir(catalogDir), manifest, check)
+			code := runBuild(catalogDir, filepath.Dir(filepath.Clean(catalogDir)), manifest, check)
 			switch code {
 			case 0:
 				return nil

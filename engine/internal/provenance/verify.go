@@ -5,11 +5,14 @@ import (
 	"encoding/hex"
 )
 
-// signerIdentityRegexp matches the keyless signer identity bound to this repo's Actions
-// workflows. Used by CosignVerifyCmd; the OIDC issuer pins GitHub.
+// signerIdentity is the EXACT keyless signer identity that may produce a valid build
+// manifest: the sign-manifest workflow running on the main ref. It is matched exactly
+// (not by a prefix regexp) so that NO other workflow in this repo — e.g. web-deploy.yml,
+// which also holds id-token: write — and no non-main ref can mint an accepted signature.
+// The OIDC issuer additionally pins GitHub Actions as the token source.
 const (
-	signerIdentityRegexp = "^https://github.com/GetEvinced/stark-marketplace/"
-	oidcIssuer           = "https://token.actions.githubusercontent.com"
+	signerIdentity = "https://github.com/GetEvinced/stark-marketplace/.github/workflows/sign-manifest.yml@refs/heads/main"
+	oidcIssuer     = "https://token.actions.githubusercontent.com"
 )
 
 // VerifyDigests recomputes sha256 over the provided files and returns the paths whose digest
@@ -32,12 +35,12 @@ func VerifyDigests(m *BuildManifest, files map[string][]byte) []string {
 }
 
 // CosignVerifyCmd returns the argv for keyless verification of a signed manifest. stark
-// verify-manifest shells out to this (cosign must be on PATH). The signer identity + OIDC issuer
-// are pinned so a signature from any other identity fails.
+// verify-manifest shells out to this (cosign must be on PATH). The signer identity (exact)
+// + OIDC issuer are pinned so a signature from any other workflow, ref, or identity fails.
 func CosignVerifyCmd(manifest, sig, cert string) []string {
 	return []string{
 		"cosign", "verify-blob",
-		"--certificate-identity-regexp", signerIdentityRegexp,
+		"--certificate-identity", signerIdentity,
 		"--certificate-oidc-issuer", oidcIssuer,
 		"--signature", sig,
 		"--certificate", cert,

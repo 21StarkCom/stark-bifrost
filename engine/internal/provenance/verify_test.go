@@ -38,13 +38,21 @@ func TestCosignVerifyCmd(t *testing.T) {
 	}
 	for _, want := range []string{
 		"cosign", "verify-blob",
-		"--certificate-identity-regexp", "GetEvinced/stark-marketplace",
+		// EXACT identity (not a prefix regexp): pins both the signing workflow and the main ref.
+		"--certificate-identity", "https://github.com/GetEvinced/stark-marketplace/.github/workflows/sign-manifest.yml@refs/heads/main",
 		"--certificate-oidc-issuer", "token.actions.githubusercontent.com",
 		"--signature", "m.json.sig", "--certificate", "m.json.pem", "m.json",
 	} {
 		if !contains(joined, want) {
 			t.Fatalf("cosign cmd missing %q: %s", want, joined)
 		}
+	}
+	// Guard against a silent broadening back to a prefix-only matcher.
+	if contains(joined, "--certificate-identity-regexp") {
+		t.Fatalf("must pin an EXACT identity, not a regexp: %s", joined)
+	}
+	if !contains(signerIdentity, "/.github/workflows/sign-manifest.yml@refs/heads/main") {
+		t.Fatalf("signerIdentity must pin the signing workflow on main, got %q", signerIdentity)
 	}
 }
 

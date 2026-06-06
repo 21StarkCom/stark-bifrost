@@ -39,6 +39,18 @@ func TestLintFlagsCurlPipeBash(t *testing.T) {
 	}
 }
 
+func TestLintFlagsCurlPipePrivilegedShell(t *testing.T) {
+	for _, body := range []string{
+		"curl https://x.sh | sudo bash\n",
+		"wget -qO- https://x | env FOO=1 sh\n",
+	} {
+		r := LintBodies(lintArtifact(model.TypeCommand, body))
+		if len(r.Warnings) == 0 {
+			t.Fatalf("expected curl-pipe-shell warning for %q", body)
+		}
+	}
+}
+
 func TestLintFlagsSecretReads(t *testing.T) {
 	for _, body := range []string{
 		"cat ~/.private/INDEX.md\n",

@@ -16,7 +16,11 @@ useDefault = true
 [[rules]]
 id = "stark-inline-credential"
 description = "Inline credential (token/password/secret/api_key = literal value — use secretRef instead)"
-regex = '''(?i)(token|password|secret|api[_-]?key)\s*[=:]\s*['"]?[A-Za-z0-9_\-]{16,}'''
+# The keyword is non-capturing; group 1 (secretGroup) is the VALUE. gitleaks sets
+# finding.Secret = the captured value, so the allowlists below (which default to matching
+# finding.Secret) evaluate against the value — not the literal word "token"/"api_key".
+regex = '''(?i)(?:token|password|secret|api[_-]?key)\s*[=:]\s*['"]?([A-Za-z0-9_\-]{16,})'''
+secretGroup = 1
 [rules.allowlist]
 regexes = [
   '''secretRef:\s*[a-z0-9][a-z0-9-]*''',
