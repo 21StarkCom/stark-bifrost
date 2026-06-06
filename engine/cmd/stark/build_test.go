@@ -9,10 +9,10 @@ import (
 func TestBuildCheckExitCodes(t *testing.T) {
 	root := repoRoot(t)
 	// write a fresh build, then --check must be clean (exit 0)
-	if code := runBuild(filepath.Join(root, "catalog"), root, false); code != 0 {
+	if code := runBuild(filepath.Join(root, "catalog"), root, "", false); code != 0 {
 		t.Fatalf("build write want 0, got %d", code)
 	}
-	if code := runBuild(filepath.Join(root, "catalog"), root, true); code != 0 {
+	if code := runBuild(filepath.Join(root, "catalog"), root, "", true); code != 0 {
 		t.Fatalf("clean --check want 0, got %d", code)
 	}
 	// tamper index.json -> --check must return drift exit 2
@@ -20,7 +20,7 @@ func TestBuildCheckExitCodes(t *testing.T) {
 	orig, _ := os.ReadFile(idx)
 	defer os.WriteFile(idx, orig, 0o644)
 	_ = os.WriteFile(idx, []byte("{}\n"), 0o644)
-	if code := runBuild(filepath.Join(root, "catalog"), root, true); code != 2 {
+	if code := runBuild(filepath.Join(root, "catalog"), root, "", true); code != 2 {
 		t.Fatalf("drift --check want exit 2, got %d", code)
 	}
 }
