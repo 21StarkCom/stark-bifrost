@@ -15,6 +15,7 @@ import (
 	"github.com/GetEvinced/stark-marketplace/engine/internal/adapter/claude"
 	"github.com/GetEvinced/stark-marketplace/engine/internal/canonjson"
 	"github.com/GetEvinced/stark-marketplace/engine/internal/index"
+	"github.com/GetEvinced/stark-marketplace/engine/internal/marketplace"
 	"github.com/GetEvinced/stark-marketplace/engine/internal/model"
 )
 
@@ -84,6 +85,19 @@ func Build(cat *model.Catalog) (Output, error) {
 		}
 		out.Files["bundles/"+n+".json"] = db
 	}
+
+	// CC marketplace manifest (spec §8): one plugins[] entry per bundle, committed
+	// under dist/claude so `/plugin marketplace add` resolves it. Emitted into the
+	// generated set so the existing drift gate covers it — no separate gate.
+	mani, err := marketplace.Marshal(marketplace.Generate(cat, marketplace.Options{
+		Name:     "stark-marketplace",
+		Owner:    marketplace.Owner{Name: "Evinced", Email: "engineering@evinced.com"},
+		DistRoot: "./dist/claude",
+	}))
+	if err != nil {
+		return Output{}, err
+	}
+	out.Files["dist/claude/"+marketplace.ManifestRelPath] = mani
 
 	pct := 0.0
 	if totalArtifacts > 0 {
