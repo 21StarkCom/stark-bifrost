@@ -28,9 +28,10 @@ func sanitizeFrontmatter(fm []byte) []byte {
 		switch {
 		case v == "", v == ">", v == ">-", v == ">+", v == "|", v == "|-", v == "|+":
 			return m // block-scalar indicator — leave it to YAML
-		case strings.HasPrefix(v, `"`) && strings.HasSuffix(v, `"`),
-			strings.HasPrefix(v, `'`) && strings.HasSuffix(v, `'`):
-			return m // already quoted
+		case strings.HasPrefix(v, `"`), strings.HasPrefix(v, `'`):
+			// already a quoted scalar — leave it to YAML (which also handles a trailing
+			// `# comment`; matching only the prefix avoids re-quoting `"[a|b]"  # pick one`).
+			return m
 		}
 		q, err := json.Marshal(v) // valid YAML double-quoted scalar (JSON string syntax)
 		if err != nil {

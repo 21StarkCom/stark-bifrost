@@ -28,6 +28,21 @@ func TestDecodeFrontmatterSanitizesLooseArgumentHint(t *testing.T) {
 	}
 }
 
+// A pre-quoted argument-hint followed by an inline comment must NOT be re-quoted (the
+// always-sanitize pass must leave an already-quoted scalar to YAML, comment and all).
+func TestSanitizeLeavesQuotedHintWithTrailingComment(t *testing.T) {
+	raw, sanitized, err := decodeFrontmatter([]byte("argument-hint: \"[a|b]\"  # pick one\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sanitized {
+		t.Fatal("already-quoted hint must not be reported as sanitized")
+	}
+	if raw["argument-hint"] != "[a|b]" {
+		t.Fatalf("quoted hint corrupted: %v", raw["argument-hint"])
+	}
+}
+
 func TestDecodeFrontmatterStrictPathUnchanged(t *testing.T) {
 	clean := []byte("name: rel\nargument-hint: \"[patch|minor|major]\"\n")
 	raw, sanitized, err := decodeFrontmatter(clean)
