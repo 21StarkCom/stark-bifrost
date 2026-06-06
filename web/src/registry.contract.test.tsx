@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 // Import the ACTUAL files the engine emits + CI ships (repo root), NOT a hand-authored fixture.
 // This pins the SPA's types/guards/rendering to real engine output so contract drift fails CI.
@@ -34,5 +34,11 @@ describe('engine-contract fidelity (real committed data)', () => {
       </MemoryRouter>,
     );
     await findByRole('heading', { name: 'stark-gh', level: 1 });
+    // The render reaches the derived dependency section (real stark-gh has requires:[] → empty
+    // state) — proving the dependencyClosure→requires migration handles real engine data, where
+    // the old code crashed reading a non-existent dependencyClosure field.
+    expect(screen.getByText(/no dependencies/i)).toBeInTheDocument();
+    // and a real per-artifact derived output path renders (CC-3 outputs[rt][0].path)
+    expect(screen.getByText('.mcp.json')).toBeInTheDocument();
   });
 });
