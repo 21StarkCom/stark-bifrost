@@ -28,27 +28,57 @@ type Owner struct {
 	Email string `json:"email,omitempty"`
 }
 
-// Source locates a plugin's committed tree. It marshals as a bare string when
-// only Path is set (string form), otherwise as the object form
-// {github|url|git-subdir}. Exactly one form is emitted per source.
+// Source locates a plugin's tree. It marshals as a bare string when Path is set
+// (the same-repo relative form, resolved relative to the marketplace root — the
+// directory containing .claude-plugin/), otherwise as the native CC discriminated
+// object form keyed by `source` (github|url|git-subdir|npm). Exactly one form is
+// emitted per source.
 type Source struct {
-	Path      string `json:"-"` // string form: relative repo path, e.g. ./dist/claude/stark-gh
-	GitHub    string `json:"github,omitempty"`
-	URL       string `json:"url,omitempty"`
-	GitSubdir string `json:"git-subdir,omitempty"`
+	Path string `json:"-"` // string form: relative path from the marketplace root, e.g. ./dist/claude/stark-gh
+
+	// object form (set Type to one of github|url|git-subdir|npm):
+	Type     string `json:"-"`
+	Repo     string `json:"-"` // github: "owner/repo"
+	URL      string `json:"-"` // url / git-subdir
+	SubPath  string `json:"-"` // git-subdir: path within the repo
+	Package  string `json:"-"` // npm
+	Version  string `json:"-"` // npm (optional)
+	Registry string `json:"-"` // npm (optional)
+	Ref      string `json:"-"` // optional branch/tag
+	SHA      string `json:"-"` // optional commit sha
 }
 
-// MarshalJSON emits the string form when Path is set, else the object form.
+// sourceObj is the CC discriminated object-source shape (struct field order is
+// preserved by encoding/json → deterministic).
+type sourceObj struct {
+	Source   string `json:"source"`
+	Repo     string `json:"repo,omitempty"`
+	URL      string `json:"url,omitempty"`
+	Path     string `json:"path,omitempty"`
+	Package  string `json:"package,omitempty"`
+	Version  string `json:"version,omitempty"`
+	Registry string `json:"registry,omitempty"`
+	Ref      string `json:"ref,omitempty"`
+	SHA      string `json:"sha,omitempty"`
+}
+
+// MarshalJSON emits the string form when Path is set, else the discriminated
+// object form per the CC marketplace schema.
 func (s Source) MarshalJSON() ([]byte, error) {
 	if s.Path != "" {
 		return json.Marshal(s.Path)
 	}
-	type obj struct {
-		GitHub    string `json:"github,omitempty"`
-		URL       string `json:"url,omitempty"`
-		GitSubdir string `json:"git-subdir,omitempty"`
-	}
-	return json.Marshal(obj{GitHub: s.GitHub, URL: s.URL, GitSubdir: s.GitSubdir})
+	return json.Marshal(sourceObj{
+		Source:   s.Type,
+		Repo:     s.Repo,
+		URL:      s.URL,
+		Path:     s.SubPath,
+		Package:  s.Package,
+		Version:  s.Version,
+		Registry: s.Registry,
+		Ref:      s.Ref,
+		SHA:      s.SHA,
+	})
 }
 
 // Plugin is one plugins[] entry — exactly one bundle. Uses `author`, not `owner`.

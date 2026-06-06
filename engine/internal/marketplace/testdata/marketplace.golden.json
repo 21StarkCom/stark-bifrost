@@ -1,8 +1,8 @@
 {
   "name": "stark-marketplace",
   "owner": {
-    "name": "Evinced",
-    "email": "engineering@evinced.com"
+    "name": "Evinced Platform",
+    "email": "platform@evinced.com"
   },
   "plugins": [
     {
@@ -11,8 +11,8 @@
       "description": "Alpha tools.",
       "version": "1.2.0",
       "author": {
-        "name": "Evinced",
-        "email": "engineering@evinced.com"
+        "name": "Alpha Team",
+        "email": "alpha@evinced.com"
       },
       "category": "examples",
       "tags": [
@@ -26,8 +26,8 @@
       "description": "GitHub workflow.",
       "version": "0.1.0",
       "author": {
-        "name": "Evinced",
-        "email": "engineering@evinced.com"
+        "name": "GH Team",
+        "email": "gh@evinced.com"
       },
       "category": "productivity",
       "tags": [

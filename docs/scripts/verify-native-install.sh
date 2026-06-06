@@ -9,7 +9,9 @@ set -euo pipefail
 # Run from anywhere inside the repo.
 
 repo_root="$(git rev-parse --show-toplevel)"
-manifest="$repo_root/dist/claude/.claude-plugin/marketplace.json"
+# The manifest lives at the repo root, so the marketplace root == repo root and
+# relative entry sources resolve against $repo_root (CC's resolution rule).
+manifest="$repo_root/.claude-plugin/marketplace.json"
 bin="$(mktemp -t stark.XXXXXX)"
 trap 'rm -f "$bin"' EXIT
 
@@ -33,6 +35,8 @@ fi
 # Every entry: author present, owner absent, source resolves.
 count="$(jq '.plugins | length' "$manifest")"
 echo "    $count plugin entr(y/ies)"
+# Guard the loop: on macOS/BSD `seq 0 -1` prints "0\n-1" (not an empty range).
+[ "$count" -gt 0 ] || { echo "    (no plugin entries)"; echo "==> OK: native install contract verified"; exit 0; }
 for i in $(seq 0 $((count - 1))); do
   name="$(jq -r ".plugins[$i].name" "$manifest")"
   jq -e ".plugins[$i].author.name" "$manifest" >/dev/null \

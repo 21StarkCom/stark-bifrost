@@ -54,28 +54,42 @@ func TestSourceStringForm(t *testing.T) {
 }
 
 func TestSourceObjectForm(t *testing.T) {
-	b, err := json.Marshal(Source{GitHub: "GetEvinced/stark-marketplace", GitSubdir: "dist/claude/stark-gh"})
+	// CC object sources are a discriminated union keyed by `source`.
+	b, err := json.Marshal(Source{Type: "github", Repo: "GetEvinced/stark-marketplace", Ref: "main"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	s := string(b)
-	if !strings.Contains(s, `"github":"GetEvinced/stark-marketplace"`) {
-		t.Fatalf("object source must carry github field: %s", s)
+	if !strings.Contains(s, `"source":"github"`) {
+		t.Fatalf("object source must carry the source discriminator: %s", s)
+	}
+	if !strings.Contains(s, `"repo":"GetEvinced/stark-marketplace"`) {
+		t.Fatalf("github source must carry repo: %s", s)
+	}
+	if !strings.Contains(s, `"ref":"main"`) {
+		t.Fatalf("optional ref must be carried: %s", s)
+	}
+	// git-subdir carries url + path.
+	gs, _ := json.Marshal(Source{Type: "git-subdir", URL: "https://github.com/x/y", SubPath: "dist/claude/z"})
+	if !strings.Contains(string(gs), `"source":"git-subdir"`) || !strings.Contains(string(gs), `"path":"dist/claude/z"`) {
+		t.Fatalf("git-subdir source shape wrong: %s", gs)
 	}
 }
 
 func twoBundleCatalog() *model.Catalog {
+	// Per-bundle owners are DISTINCT from each other and from the root owner so the
+	// owner@root vs author@entry mapping is actually guarded (red-team Part B).
 	return &model.Catalog{Bundles: []*model.Bundle{
 		// intentionally out of sorted order to prove deterministic sort:
 		{
 			Name: "stark-gh", Version: "0.1.0", Description: "GitHub workflow.",
 			Category: "productivity", Tags: []string{"github", "pr"},
-			Owner: model.Owner{Name: "Evinced", Email: "engineering@evinced.com"},
+			Owner: model.Owner{Name: "GH Team", Email: "gh@evinced.com"},
 		},
 		{
 			Name: "alpha-bundle", Version: "1.2.0", Description: "Alpha tools.",
 			Category: "examples", Tags: []string{"demo"},
-			Owner: model.Owner{Name: "Evinced", Email: "engineering@evinced.com"},
+			Owner: model.Owner{Name: "Alpha Team", Email: "alpha@evinced.com"},
 		},
 	}}
 }
@@ -83,7 +97,7 @@ func twoBundleCatalog() *model.Catalog {
 func defaultOpts() Options {
 	return Options{
 		Name:     "stark-marketplace",
-		Owner:    Owner{Name: "Evinced", Email: "engineering@evinced.com"},
+		Owner:    Owner{Name: "Evinced Platform", Email: "platform@evinced.com"},
 		DistRoot: "./dist/claude",
 	}
 }
@@ -100,14 +114,21 @@ func TestGenerateOneEntryPerBundleSorted(t *testing.T) {
 	if p.Source.Path != "./dist/claude/stark-gh" {
 		t.Fatalf("source path = %q", p.Source.Path)
 	}
-	if p.Author.Name != "Evinced" || p.Version != "0.1.0" || p.Category != "productivity" {
+	if p.Version != "0.1.0" || p.Category != "productivity" {
 		t.Fatalf("entry fields wrong: %+v", p)
 	}
 	if !p.Strict {
 		t.Fatal("strict must default to true")
 	}
-	if m.Owner.Name != "Evinced" {
-		t.Fatalf("root owner = %+v", m.Owner)
+	// author@entry derives from the BUNDLE owner; owner@root from Options — they differ.
+	if p.Author.Name != "GH Team" {
+		t.Fatalf("entry author must derive from the bundle owner, got %+v", p.Author)
+	}
+	if m.Owner.Name != "Evinced Platform" {
+		t.Fatalf("root owner must be the Options owner, got %+v", m.Owner)
+	}
+	if p.Author.Name == m.Owner.Name {
+		t.Fatal("entry author must be distinct from root owner in this fixture (guards owner/author mapping)")
 	}
 }
 

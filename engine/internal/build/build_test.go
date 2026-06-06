@@ -55,9 +55,9 @@ func TestBuildEmitsMarketplaceManifest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, ok := out.Files["dist/claude/.claude-plugin/marketplace.json"]
+	b, ok := out.Files[".claude-plugin/marketplace.json"]
 	if !ok {
-		t.Fatal("marketplace.json not produced into the generated set")
+		t.Fatal("marketplace.json not produced into the generated set (repo-root .claude-plugin)")
 	}
 	s := string(b)
 	// root owner, entry author (red-team Part B), seed bundle present.

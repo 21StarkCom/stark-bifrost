@@ -1,13 +1,22 @@
 # Native Claude Code install loop
 
 `stark-marketplace` installs into Claude Code with **no custom client**. The
-committed `dist/claude/` tree IS the marketplace; CC reads
-`dist/claude/.claude-plugin/marketplace.json` directly from the repo.
+committed repo-root `.claude-plugin/marketplace.json` IS the marketplace manifest;
+CC reads it directly and resolves each plugin's `source` (e.g.
+`./dist/claude/stark-gh`) relative to the marketplace root (the repo root).
+
+> **Why the manifest is at the repo root, not under `dist/claude/`:** CC's
+> `/plugin marketplace add owner/repo` shorthand looks for
+> `.claude-plugin/marketplace.json` at the repository root, and relative plugin
+> `source` paths resolve against the directory that contains `.claude-plugin/`.
+> Committing the manifest at the repo root makes both the documented add command
+> and the `./dist/claude/<bundle>` sources resolve. The bundle trees themselves
+> stay under the committed `dist/claude/` tree.
 
 ## What is committed (spec §5.1)
 
-- **Committed:** `dist/claude/` (incl. `.claude-plugin/marketplace.json`),
-  `index.json`, `bundles/*.json` — marked `linguist-generated`.
+- **Committed:** repo-root `.claude-plugin/marketplace.json`, the `dist/claude/`
+  bundle trees, `index.json`, `bundles/*.json` — marked `linguist-generated`.
 - **NOT committed:** `dist/codex/`, `dist/gemini/` — built on `stark install`
   (no in-repo consumer).
 
