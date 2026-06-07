@@ -1,0 +1,57 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this repo is
+
+`stark-marketplace` is the **canonical, multi-runtime marketplace** for stark bundles. A bundle is the source of truth (`catalog/<bundle>/bundle.yaml` + artifacts) and the engine renders it into per-runtime trees (`dist/claude/`, `dist/codex/`, `dist/gemini/`) plus a signed `index.json` / `bundles/*.json` web registry. The repo doubles as a native **Claude Code marketplace** — `.claude-plugin/marketplace.json` at the repo root IS the manifest CC reads when you `/plugin marketplace add GetEvinced/stark-marketplace`.
+
+## Layout
+
+- `catalog/<bundle>/bundle.yaml` + `skills/`, `commands/`, `agents/`, `prompts/`, `mcp/` — **source of truth**. Edit here.
+- `engine/` — Go CLI (`cmd/stark`) + libraries (`internal/{adapter,build,validate,importer,install,...}`). Per-runtime adapters live under `internal/adapter/{claude,codex,gemini}`.
+- `dist/claude/` — **committed** rendered tree (CC consumes it directly). `dist/codex/` and `dist/gemini/` are **NOT committed** — built on `stark install`.
+- `bundles/*.json`, `index.json` — committed, signed web-registry payloads. Marked `linguist-generated`.
+- `schema/` — JSON Schemas (`bundle`, `artifact.{skill,command,agent,prompt,mcp}`). Fail-closed in CI.
+- `server/` — small Go static origin for the web registry (Cloud Run behind IAP at `marketplace.evinced.rocks`). No auth in-process; IAP terminates SSO.
+- `web/` — strict-TS Vite/React SPA shell over `index.json` (HashRouter, relative fetches).
+- `.claude-plugin/marketplace.json` — repo-root CC marketplace manifest (must stay at repo root; CC resolves plugin `source` paths relative to it).
+- `docs/` — `native-install-loop.md`, `web-hosting.md`, `SECURITY.md`. Read these before changing install/deploy/governance behavior.
+
+## Common commands
+
+Engine (run from `engine/`):
+- `go test ./... -count=1` — unit + golden + determinism + integration
+- `go vet ./...`
+- `go run ./cmd/stark validate ../catalog` — fail-closed schema + cross-ref
+- `go run ./cmd/stark build --check ../catalog` — **drift gate**; rebuild must equal committed `dist/claude/` + registry
+- `go run ./cmd/stark check-bumps ../catalog` — version-bump immutability
+- `go run ./cmd/stark lint ../catalog` — body suspicious-pattern scan (non-blocking)
+- `go run ./cmd/stark install <bundle> --runtime claude|codex|gemini` — render into local config
+
+Web (run from `web/`):
+- `npm run dev` / `npm run build` (does `tsc --noEmit && vite build`) / `npm run test` / `npm run lint` / `npm run typecheck`
+
+Server (run from `server/`): `go test ./...`, `go run . ` (env: `WEBROOT`, `PORT`).
+
+CI mirrors these exactly (`.github/workflows/ci.yml`): validate → drift `build --check` → check-bumps → lint → tests → gitleaks. All blocking except `lint`.
+
+## Architecture — the bits that need multiple files to understand
+
+**Source → adapter → output.** `internal/load` reads `catalog/`; `internal/adapter/{claude,codex,gemini}` each implement a `Target` that renders a `model.Bundle` into a runtime-specific file tree. `internal/build` drives a full render; `internal/install` consumes a per-runtime render to write into a user's CC/codex/gemini config. `cmd/stark` wires these together. The `catalogAdapter` in `engine/cmd/stark/` is the production `installplan.Adapter` — renders **one artifact at a time** in a single-artifact sub-bundle so a multi-MCP bundle doesn't collide on `config.toml`.
+
+**Determinism is load-bearing.** `build --check` is the drift gate. Any change that re-renders bytes — adapter output, schema, canonicalization (`internal/canonjson`), aggregate index (`internal/aggregate`), digest (`internal/digest`) — will fail CI unless you also commit the regenerated `dist/claude/`, `index.json`, `bundles/*.json`. Workflow: edit catalog → `go run ./cmd/stark build ../catalog` → commit the diff.
+
+**Spec §5.1 commit rule.** Only `dist/claude/` is committed (CC needs it at-rest). `dist/codex/` and `dist/gemini/` are produced by `stark install` on the user's machine — never commit them.
+
+**Version-bump immutability** (`internal/bumps`): an artifact at a given version is content-locked. Bump the version when content changes; `check-bumps` blocks otherwise.
+
+**Web registry signing.** `sign-manifest.yml` workflow signs `index.json`. The web SPA fetches `./index.json` and `./bundles/<name>.json` relative to the document; the static origin serves no-cache for these and immutable long-cache for hashed assets.
+
+## Conventions
+
+- **Go 1.24**, module `github.com/GetEvinced/stark-marketplace/engine`. Standard layout (`cmd/`, `internal/`), small packages.
+- **TypeScript strict** in `web/`. ESM, narrow types.
+- **Never hand-edit `dist/`, `index.json`, or `bundles/*.json`.** Regenerate via `stark build`.
+- **CODEOWNERS** gates schema, adapters, governance, signing, deploy — respect the gates; don't try to route around them.
+- See `docs/native-install-loop.md` for the CC install loop and `docs/SECURITY.md` for the threat model and signing policy.
