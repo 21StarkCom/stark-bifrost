@@ -51,7 +51,7 @@ jobs:
           cp index.json web/dist/index.json
           cp bundles/*.json web/dist/bundles/ 2>/dev/null || true
       - name: Upload SPA+index artifact (atomic unit)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: web-dist
           path: web/dist

@@ -59,7 +59,7 @@ jobs:
         run: sha256sum build-manifest.json build-manifest.json.sig build-manifest.json.pem > build-manifest.sha256
 
       - name: upload signed manifest bundle (workflow artifact, audit trail)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-manifest
           path: |
