@@ -130,6 +130,16 @@ jobs:
           TAG: ${{ steps.ver.outputs.tag }}
         run: git fetch origin "refs/tags/${TAG}:refs/tags/${TAG}"
 
+      # `stark build` (called above to produce the manifest) re-renders
+      # dist/claude in place. Even when the rebuild is byte-identical, the
+      # remove-then-write sequence leaves git briefly seeing the tree as
+      # modified, which trips goreleaser's clean-tree check. Restoring HEAD
+      # is safe because goreleaser builds binaries from the tagged source —
+      # not from the working tree's dist/claude contents.
+      - name: restore working tree before goreleaser (stark build re-renders in place)
+        if: steps.tagcheck.outputs.exists == 'false'
+        run: git checkout -- .
+
       - name: goreleaser — build + append stark CLI binaries to the release
         if: steps.tagcheck.outputs.exists == 'false'
         uses: goreleaser/goreleaser-action@v6
