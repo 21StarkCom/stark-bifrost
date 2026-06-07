@@ -52,6 +52,8 @@ jobs:
         run: go run ./cmd/stark check-bumps ../catalog
       - name: stark lint --strict (body suspicious-pattern scan — BLOCKING)
         run: go run ./cmd/stark lint --strict ../catalog
+      - name: stark allowlist --check (docs/allowlist.md drift — BLOCKING)
+        run: go run ./cmd/stark allowlist --check ../docs/allowlist.md
 
   secrets:
     name: secret scan (catalog)
