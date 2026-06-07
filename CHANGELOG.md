@@ -4,6 +4,15 @@ All notable changes to `stark-marketplace`. The format follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-06-07
+
+### Fixed
+- Restore working tree (`git checkout -- .`) before invoking goreleaser
+  inside `sign-manifest.yml`. The previous run's `stark build` re-rendered
+  `dist/claude` in place which tripped goreleaser's clean-tree check even
+  when the rebuild was byte-identical. Binaries build from the tagged
+  source, so the checkout is safe and unblocks the goreleaser stage.
+
 ## [0.1.1] — 2026-06-07
 
 ### Fixed
@@ -11,7 +20,8 @@ All notable changes to `stark-marketplace`. The format follows [Keep a Changelog
   with the signed manifest but no binaries because the tag was pushed by
   `GITHUB_TOKEN`, which doesn't trigger downstream `on: push: tags`
   workflows. Folded goreleaser into `sign-manifest.yml` so every signed
-  release atomically ships manifest + binaries.
+  release atomically ships manifest + binaries. (v0.1.1 still missed the
+  binaries due to a separate clean-tree bug fixed in v0.1.2.)
 
 ## [0.1.0] — 2026-06-07
 
@@ -28,6 +38,7 @@ First tagged release. Spec slices 1–8 complete (catalog → engine → web →
 - Cosign-keyless signed build manifest via GitHub OIDC → Fulcio + Rekor.
 - Top-level docs: `CLAUDE.md`, `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, `docs/SECURITY.md`, `docs/native-install-loop.md`, `docs/web-hosting.md`.
 
-[Unreleased]: https://github.com/GetEvinced/stark-marketplace/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/GetEvinced/stark-marketplace/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/GetEvinced/stark-marketplace/releases/tag/v0.1.2
 [0.1.1]: https://github.com/GetEvinced/stark-marketplace/releases/tag/v0.1.1
 [0.1.0]: https://github.com/GetEvinced/stark-marketplace/releases/tag/v0.1.0
