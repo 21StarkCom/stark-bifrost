@@ -21,7 +21,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "runtimes": [
         "claude"
       ],
@@ -43,7 +43,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "runtimes": [
         "claude"
       ],
@@ -51,6 +51,28 @@
         "claude": "native"
       },
       "digest": "sha256:8ab73fdfcfb829d8df08120cb1f58544c24fd21a8173a7c54508a04f41892c96"
+    },
+    {
+      "name": "stark-review-design-improvement",
+      "type": "skill",
+      "bundle": "stark-analyze",
+      "description": "Improve design review prompts from assessment feedback. Wraps /stark-review-improvement for design-review prompts.",
+      "tags": [
+        "review",
+        "red-team",
+        "quality",
+        "analyze"
+      ],
+      "category": "review",
+      "maturity": "beta",
+      "version": "0.1.2",
+      "runtimes": [
+        "claude"
+      ],
+      "support": {
+        "claude": "native"
+      },
+      "digest": "sha256:73fce24bd523d8a649045673319107346e8fe301ce8810cc07cdc4b9b27f2ec0"
     },
     {
       "name": "stark-review-design",
@@ -65,7 +87,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "runtimes": [
         "claude"
       ],
@@ -73,6 +95,28 @@
         "claude": "native"
       },
       "digest": "sha256:fb64d56d536baffe0d07044f8f3f581fcba3f3456bd942c040decda93b54a369"
+    },
+    {
+      "name": "stark-review-improvement",
+      "type": "skill",
+      "bundle": "stark-analyze",
+      "description": "Improve review prompts based on Prompt Improvement Assessment from completed reviews. Use for fix review prompts.",
+      "tags": [
+        "review",
+        "red-team",
+        "quality",
+        "analyze"
+      ],
+      "category": "review",
+      "maturity": "beta",
+      "version": "0.1.2",
+      "runtimes": [
+        "claude"
+      ],
+      "support": {
+        "claude": "native"
+      },
+      "digest": "sha256:0321d4fc858b1481387d076c652c3dbf06b750ddd6edbeb83244a5ac3121858e"
     },
     {
       "name": "stark-review-plan",
@@ -87,7 +131,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "runtimes": [
         "claude"
       ],
@@ -109,7 +153,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "runtimes": [
         "claude"
       ],
