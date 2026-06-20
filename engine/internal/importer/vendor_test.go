@@ -34,7 +34,7 @@ func TestPluginVendorSnapshot(t *testing.T) {
 	writeFile(t, filepath.Join(gh, "package.json"), `{"type":"module"}`)
 	writeFile(t, filepath.Join(gh, "README.md"), "# not vendored")
 
-	got, err := PluginVendorSnapshot(from, "stark-gh")
+	got, err := PluginVendorSnapshot(from, "stark-gh", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +70,7 @@ func TestPluginVendorSnapshot(t *testing.T) {
 // TestPluginVendorSnapshotSkillsOnly verifies a bundle with no plugins/<bundle>
 // dir (a skills-only bundle) yields an empty, non-nil snapshot — not an error.
 func TestPluginVendorSnapshotSkillsOnly(t *testing.T) {
-	got, err := PluginVendorSnapshot(t.TempDir(), "stark-analyze")
+	got, err := PluginVendorSnapshot(t.TempDir(), "stark-analyze", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,12 +87,47 @@ func TestPluginVendorSnapshotSkillsOnly(t *testing.T) {
 func TestPluginVendorSnapshotConfigOnly(t *testing.T) {
 	from := t.TempDir()
 	writeFile(t, filepath.Join(from, "plugins", "p", "config.json"), `{"k":1}`)
-	got, err := PluginVendorSnapshot(from, "p")
+	got, err := PluginVendorSnapshot(from, "p", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(got) != 1 || string(got["config.json"]) != `{"k":1}` {
 		t.Fatalf("got %v, want only config.json", got)
+	}
+}
+
+// TestPluginVendorSnapshotSkillReferences verifies each bundle skill's references/
+// subtree is captured as skills/<name>/references/** (so a marketplace-installed
+// skill ships the docs its SKILL.md points to), even for a skills-only bundle with
+// no plugins/<bundle> dir. SKILL.md itself is NOT captured here — the adapter
+// renders it.
+func TestPluginVendorSnapshotSkillReferences(t *testing.T) {
+	from := t.TempDir()
+	rp := filepath.Join(from, "skill", "stark-refactor-plan")
+	writeFile(t, filepath.Join(rp, "SKILL.md"), "---\nname: stark-refactor-plan\n---\nbody\n")
+	writeFile(t, filepath.Join(rp, "references", "backlog-schema.md"), "schema\n")
+	writeFile(t, filepath.Join(rp, "references", "sub", "nested.md"), "nested\n")
+	// a peer skill with no references/ must contribute nothing.
+	writeFile(t, filepath.Join(from, "skill", "stark-review", "SKILL.md"), "---\nname: stark-review\n---\nbody\n")
+
+	got, err := PluginVendorSnapshot(from, "stark-analyze", []string{"stark-refactor-plan", "stark-review"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{
+		"skills/stark-refactor-plan/references/backlog-schema.md": "schema\n",
+		"skills/stark-refactor-plan/references/sub/nested.md":     "nested\n",
+	}
+	if len(got) != len(want) {
+		t.Fatalf("got %d files, want %d: %v", len(got), len(want), keysOf(got))
+	}
+	for rel, content := range want {
+		if string(got[rel]) != content {
+			t.Fatalf("%q = %q, want %q", rel, got[rel], content)
+		}
+	}
+	if _, ok := got["skills/stark-refactor-plan/SKILL.md"]; ok {
+		t.Error("SKILL.md must be rendered by the adapter, not vendored")
 	}
 }
 
