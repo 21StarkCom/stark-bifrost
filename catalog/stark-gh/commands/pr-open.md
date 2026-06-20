@@ -2,7 +2,7 @@
 name: pr-open
 type: command
 description: Open or update a PR with Codex-drafted prose, stage-all commit (default), push, and CI watcher.
-version: 0.1.1
+version: 0.1.3
 maturity: beta
 runtimes:
   - claude
