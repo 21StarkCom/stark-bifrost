@@ -64,7 +64,7 @@ func runSync(from, catalogDir, repoRoot string, check bool) int {
 		// Per-bundle plugin assets (plugins/<bundle>/tools + its own config/package.json),
 		// captured into vendor/plugins/<bundle>/ and layered by `stark build` into THIS
 		// bundle's dist tree only. Empty for skills-only bundles (no plugins/<bundle> dir).
-		pv, err := importer.PluginVendorSnapshot(from, b.Name)
+		pv, err := importer.PluginVendorSnapshot(from, b.Name, b.Skills)
 		if err != nil {
 			fmt.Printf("plugin vendor %s: %v\n", b.Name, err)
 			return 1
