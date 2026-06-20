@@ -21,7 +21,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "runtimes": [
         "claude"
       ],
@@ -43,7 +43,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "runtimes": [
         "claude"
       ],
@@ -51,6 +51,28 @@
         "claude": "native"
       },
       "digest": "sha256:8ab73fdfcfb829d8df08120cb1f58544c24fd21a8173a7c54508a04f41892c96"
+    },
+    {
+      "name": "stark-refactor-plan",
+      "type": "skill",
+      "bundle": "stark-analyze",
+      "description": "Plan a codebase refactor without touching code. Inspect a repository and produce two artifacts — REFACTOR_PLAN.md and REFACTOR_BACKLOG.json — an evidence-based, phased, file-by-file restructuring plan another agent can execute. Use whenever the user wants to refactor, restructure, reorganize, modularize, clean up, de-duplicate, untangle, find dead code, or assess the architecture of a codebase, or asks for a refactor plan / backlog / roadmap — even if they don't say \"plan\" explicitly. Planning only: never modifies, moves, renames, or deletes source.",
+      "tags": [
+        "review",
+        "red-team",
+        "quality",
+        "analyze"
+      ],
+      "category": "review",
+      "maturity": "beta",
+      "version": "0.1.3",
+      "runtimes": [
+        "claude"
+      ],
+      "support": {
+        "claude": "native"
+      },
+      "digest": "sha256:d1d31bc97e0e37c2016f7fbf94f118efb4ebfbfaf5f761b9414915a514586746"
     },
     {
       "name": "stark-review-design-improvement",
@@ -65,7 +87,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "runtimes": [
         "claude"
       ],
@@ -87,7 +109,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "runtimes": [
         "claude"
       ],
@@ -109,7 +131,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "runtimes": [
         "claude"
       ],
@@ -131,7 +153,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "runtimes": [
         "claude"
       ],
@@ -153,7 +175,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "runtimes": [
         "claude"
       ],
@@ -218,7 +240,7 @@
       ],
       "category": "productivity",
       "maturity": "beta",
-      "version": "0.1.1",
+      "version": "0.1.3",
       "runtimes": [
         "claude",
         "codex",
@@ -243,7 +265,7 @@
       ],
       "category": "productivity",
       "maturity": "beta",
-      "version": "0.1.1",
+      "version": "0.1.3",
       "runtimes": [
         "claude",
         "codex",
@@ -268,7 +290,7 @@
       ],
       "category": "productivity",
       "maturity": "beta",
-      "version": "0.1.1",
+      "version": "0.1.3",
       "runtimes": [
         "claude",
         "codex",

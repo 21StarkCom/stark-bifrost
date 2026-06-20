@@ -9,7 +9,7 @@
       "name": "stark-analyze",
       "source": "./dist/claude/stark-analyze",
       "description": "Multi-domain review and adversarial red-team of designs, execution plans, and PRs, plus review-prompt improvement from assessment feedback. Maps to spec-kit's analyze phase.",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "author": {
         "name": "Evinced",
         "email": "engineering@evinced.com"
@@ -45,7 +45,7 @@
       "name": "stark-gh",
       "source": "./dist/claude/stark-gh",
       "description": "GitHub workflow commands + MCP for stark.",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "author": {
         "name": "Evinced",
         "email": "engineering@evinced.com"
