@@ -1,25 +1,22 @@
-# stark-marketplace — Web registry hosting (gated-static behind SSO)
+# stark-marketplace — Web registry hosting
 
-> **Provisioned.** Host = `marketplace.evinced.rocks`, served on **Cloud Run + IAP**
-> behind the shared platform LB. Infra primitives (SAs/IAM/GAR/NEG/IAP/host-rule/DNS)
-> live in Terraform (`infra-ai-platform/infra/stark-marketplace.tf`) — no ad-hoc
-> `gcloud`. The **Cloud Run service itself is deployed by this repo's CI** via WIF
-> (`.github/workflows/web-deploy.yml`), per the infra-ai-platform ownership split.
-> See **Provisioned implementation** at the bottom for the concrete wiring.
+> **Provisioned target.** Host = `marketplace.evinced-infra.group`, served on
+> Cloud Run behind the `ev-infra-group` shared platform LB. Infra primitives
+> (SAs/IAM/GAR/NEG/host-rule/DNS) live in Terraform
+> (`ev-infra-group/infra/stark-marketplace.tf`) — no ad-hoc `gcloud`. The Cloud
+> Run service itself is deployed by this repo's CI via WIF
+> (`.github/workflows/web-deploy.yml`).
 
-## Pattern: identity-aware proxy in front of static content
+## Pattern: public static origin behind the platform LB
 
 - **Origin:** the atomic content-hashed `web/dist` bundle (SPA shell + hashed assets +
   `index.json` + `bundles/*.json`), produced by `.github/workflows/web-deploy.yml`.
-- **Gate:** an **identity-aware proxy enforcing Google Workspace SSO** sits in front of
-  the origin. Options that satisfy the spec:
-  - **GCP Cloud Run + IAP** (Cloud Run serves the static bundle via a tiny static
-    file server image; IAP enforces the Evinced Workspace org). Recommended.
-  - Equivalent: GCLB + IAP in front of a GCS backend bucket.
-- **Critical invariant (spec §10):** the proxy gates **ALL data files**, not just HTML —
-  `index.json`, every `bundles/<name>.json`, and any served Claude tree are behind the
-  same SSO check. There is **no anonymous origin** and **no app-level user store**;
-  identity is the proxy's job.
+- **Public edge:** the shared external HTTPS LB serves
+  `marketplace.evinced-infra.group`; there is no IAP block on the marketplace
+  backend.
+- **Origin posture:** Cloud Run deploys with
+  `--ingress internal-and-cloud-load-balancing`, so the public `*.run.app` URL is
+  blocked and traffic enters through the LB.
 
 ## Routing (no server rewrite needed)
 
@@ -37,12 +34,12 @@ paths to `/index.html` and serve a root-anchored asset base — call that out he
   cache-busted pointers). Because assets are hashed, a deploy flips atomically — a client
   never pairs a new `index.html` with a stale asset, nor an old SPA with a new index.
 
-## Auth for SPA fetches
+## SPA fetches
 
-The SPA calls `fetch(..., { credentials: 'same-origin' })`; the proxy session cookie
-authorizes the data fetches. On a 401/expired session the data layer returns a
-**degraded** result (it never throws) and the UI points the user to the GitHub source
-and to re-authenticate (`src/data/registry.ts`).
+The SPA calls `fetch(..., { credentials: 'same-origin' })`. The origin serves
+`index.json` and `bundles/*.json` as public static files from the same host. If
+the index is unreadable, the data layer returns a degraded result instead of
+throwing (`src/data/registry.ts`).
 
 ## Schema skew safety net
 
@@ -53,9 +50,8 @@ the SPA shows the degraded view rather than blank-failing (`src/data/schema.ts`,
 ## Provisioned implementation
 
 ```
-browser → marketplace.evinced.rocks
-        → platform HTTPS LB (host rule, *.evinced.rocks wildcard cert)
-        → IAP  (Evinced Google SSO)
+browser → marketplace.evinced-infra.group
+        → platform HTTPS LB (host rule, *.evinced-infra.group wildcard cert)
         → serverless NEG → Cloud Run `stark-marketplace` (server/)
 ```
 
@@ -64,14 +60,14 @@ browser → marketplace.evinced.rocks
 | `server/` | this repo | stdlib Go static fileserver (SPA + `index.json` + `bundles/`, cache headers, `/healthz`) |
 | `Dockerfile` | this repo | `web/dist` (built in CI) + the Go binary → distroless image |
 | `.github/workflows/web-deploy.yml` | this repo | build → push to GAR → `gcloud run deploy` (WIF, keyless) |
-| runtime SA, CI SA + WIF, GAR, NEG, IAP backend, host rule, DNS, registry slot 16 | `infra-ai-platform` (`infra/stark-marketplace.tf`) | all infra primitives |
+| runtime SA, CI SA + WIF, GAR, NEG, backend, host rule, DNS, registry slot 2 | `ev-infra-group` (`infra/stark-marketplace.tf`) | all infra primitives |
 
 **Cloud Run posture:** `--ingress internal-and-cloud-load-balancing` blocks the
 public `*.run.app` URL (only the external LB reaches the service). The LB →
 Cloud Run hop on a serverless NEG carries no Cloud Run IAM token, so the service
 needs an `allUsers` `run.invoker` binding — **owned by Terraform** (gated), so the
 deploy SA (`run.developer`) never calls `setIamPolicy`. Safe because ingress
-restricts the path to the LB and **IAP gates every user at the edge**.
+restricts the path to the LB.
 
 **Required repo variables** (Settings → Secrets and variables → Actions → Variables),
 set from the Terraform outputs after the infra PR applies:
@@ -81,14 +77,14 @@ set from the Terraform outputs after the infra PR applies:
 | `GCP_WORKLOAD_IDENTITY_PROVIDER` | `wif_provider_name` |
 | `GCP_DEPLOY_SA` | `marketplace_ci_sa_email` |
 
-Project (`infra-ai-platform`), region (`us-east1`), GAR repo, service name, and
+Project (`ev-infra-group`), region (`us-central1`), GAR repo, service name, and
 runtime SA are fixed in the workflow `env:` block.
 
 **Bootstrap order (first time only):**
-1. infra-ai-platform PR → review → CI apply (creates identity, GAR, IAP backend, host rule, DNS).
+1. `ev-infra-group` apply with `marketplace_lb_enabled=false` creates identity and GAR.
 2. Set the two repo variables from the TF outputs.
 3. Merge this repo to `main` → CI builds + deploys the Cloud Run service.
-4. Visit `https://marketplace.evinced.rocks` → IAP SSO → registry.
+4. Flip `marketplace_lb_enabled=true` in `ev-infra-group` and apply again to wire DNS/LB/alerts.
+5. Visit `https://marketplace.evinced-infra.group`.
 
-Until step 3's first deploy lands, the host resolves and IAP prompts, but the
-backend has no Cloud Run revision yet (502/404 behind IAP) — expected.
+Until step 4 lands, the custom host is intentionally not wired.
