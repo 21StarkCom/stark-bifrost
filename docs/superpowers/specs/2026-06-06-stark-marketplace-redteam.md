@@ -1,5 +1,10 @@
 # stark-marketplace spec — red-team findings & resolutions
 
+> Historical note, 2026-06-23: current hosting is public at
+> `https://marketplace.evinced-infra.group` in `ev-infra-group` without IAP.
+> See `docs/web-hosting.md` for live hosting. This file preserves the original
+> red-team context.
+
 **Date:** 2026-06-06 · Four parallel adversarial reviews (security/abuse, architecture,
 operability, correctness+runtime-accuracy) against the v1 spec. Resolutions folded into
 the v2 spec (`2026-06-06-stark-marketplace-design.md`).

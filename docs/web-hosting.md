@@ -1,7 +1,7 @@
 # stark-marketplace — Web registry hosting
 
-> **Provisioned target.** Host = `marketplace.evinced-infra.group`, served on
-> Cloud Run behind the `ev-infra-group` shared platform LB. Infra primitives
+> **Live.** Host = `marketplace.evinced-infra.group`, served on Cloud Run behind
+> the `ev-infra-group` shared platform LB. Infra primitives
 > (SAs/IAM/GAR/NEG/host-rule/DNS) live in Terraform
 > (`ev-infra-group/infra/stark-marketplace.tf`) — no ad-hoc `gcloud`. The Cloud
 > Run service itself is deployed by this repo's CI via WIF
@@ -80,11 +80,12 @@ set from the Terraform outputs after the infra PR applies:
 Project (`ev-infra-group`), region (`us-central1`), GAR repo, service name, and
 runtime SA are fixed in the workflow `env:` block.
 
-**Bootstrap order (first time only):**
-1. `ev-infra-group` apply with `marketplace_lb_enabled=false` creates identity and GAR.
-2. Set the two repo variables from the TF outputs.
-3. Merge this repo to `main` → CI builds + deploys the Cloud Run service.
-4. Flip `marketplace_lb_enabled=true` in `ev-infra-group` and apply again to wire DNS/LB/alerts.
-5. Visit `https://marketplace.evinced-infra.group`.
+**Completed bootstrap order:**
+1. `ev-infra-group` apply with `marketplace_lb_enabled=false` created identity and GAR.
+2. Repo variables were set from the Terraform outputs.
+3. This repo's `web-deploy` workflow deployed Cloud Run revision `stark-marketplace-00001-7gk`.
+4. `marketplace_lb_enabled=true` was applied in `ev-infra-group`, wiring DNS/LB/alerts.
+5. `https://marketplace.evinced-infra.group/` returns `HTTP/2 200`; `/healthz` returns `ok`.
 
-Until step 4 lands, the custom host is intentionally not wired.
+Future deploys are push-to-main through `.github/workflows/web-deploy.yml`; no
+manual `gcloud run deploy` is needed for normal updates.

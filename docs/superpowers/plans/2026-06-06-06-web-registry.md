@@ -1,5 +1,10 @@
 # stark-marketplace — Slice 6: Web registry (SSO-gated static SPA) Implementation Plan
 
+> Historical note, 2026-06-23: current hosting is public at
+> `https://marketplace.evinced-infra.group` in `ev-infra-group` without IAP.
+> See `docs/web-hosting.md` for live hosting. This plan preserves the original
+> SSO-gated implementation context.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Ship a strict-TypeScript + Vite static SPA under `web/` that reads the **lean `index.json`** for faceted search and per-bundle **`bundles/<name>.json`** for detail-on-demand, renders bundle/artifact detail with per-surface install instructions + native/emulated badges + dependency graph + GitHub deep links, **degrades gracefully** on `schemaVersion`/`version` skew, and deploys as one atomic content-hashed unit behind an Evinced-standard SSO identity-aware proxy.
