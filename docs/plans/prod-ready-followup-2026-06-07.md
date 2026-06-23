@@ -1,5 +1,10 @@
 # /goal prompt — stark-marketplace prod-ready follow-up (2026-06-07)
 
+> Hosting update, 2026-06-23: the live web registry moved to
+> `https://marketplace.evinced-infra.group` in the `ev-infra-group` GCP project.
+> The old `infra-ai-platform` / `marketplace.evinced.rocks` / IAP references in
+> this historical prompt are retained only where they describe old context.
+
 Single self-contained prompt to feed into `/goal`. Each numbered item is independent — work them in any order, commit in slices, push to `main` (worktree → ff-only → push), and re-verify CI green before moving on.
 
 ---
@@ -65,10 +70,10 @@ When the cause is found, fix `internal/build/build.go` to match HEAD exactly, dr
 
 Create `docs/operations/rollback.md` (new directory) covering:
 
-- **Cloud Run revision rollback**: `gcloud run services update-traffic stark-marketplace --to-revisions=<prev>=100 --region=us-east1` — include the IAP/LB caveat that traffic flips need a min-instances revision first if cold-starting.
+- **Cloud Run revision rollback**: `gcloud run services update-traffic stark-marketplace --to-revisions=<prev>=100 --region=us-central1 --project=ev-infra-group` — include the LB caveat that traffic flips need a min-instances revision first if cold-starting.
 - **Bad-bundle yank**: how to take a published bundle out of circulation without breaking version-bump immutability. The pattern is to publish a new version of the bundle that's effectively empty/deprecated, NOT to delete the released bytes. Document the marketplace.json registry-side approach.
 - **Signed-release revocation**: how to mark a signed release as poisoned. Cosign doesn't have native revocation; document the policy: bump VERSION, ship a new signed release, post an advisory in `SECURITY.md` listing the SHAs that should not be installed.
-- **Who pages whom**: link to the email notification channel that `infra-ai-platform`'s uptime + 5xx alerts route to.
+- **Who pages whom**: link to the email notification channel that `ev-infra-group`'s uptime + 5xx alerts route to.
 
 ## 6. MCP allowlist auto-surfaced
 
@@ -82,7 +87,7 @@ Generate `docs/allowlist.md` deterministically from `engine/internal/validate/al
 ## 7. Surfaced cleanup
 
 - Annotate `v0.1.0`, `v0.1.1`, `v0.1.2` releases with a "superseded by v0.1.3 — do not use" note. Don't delete the tags or releases (destructive — they're referenced by the manifests already cosign-signed and any external consumer could pin them).
-- Trigger a manual `web-deploy.yml` run so the live SPA at `marketplace.evinced.rocks` picks up the `ProvenanceBadge` shipped in 0.1.0. Verify in the browser that the badge renders.
+- Trigger a manual `web-deploy.yml` run so the live SPA at `marketplace.evinced-infra.group` picks up the `ProvenanceBadge` shipped in 0.1.0. Verify in the browser that the badge renders.
 - Verify in GCP Monitoring that the new `stark-marketplace uptime` and `stark-marketplace 5xx from LB backend` policies are green / active. If the uptime probe is flapping, debug — the `STATUS_CLASS_3XX` acceptance may need adjusting for IAP's exact response.
 
 ## Wrap-up

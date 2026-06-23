@@ -1,5 +1,10 @@
 # stark-marketplace — Design Spec (v2, post red-team)
 
+> Historical note, 2026-06-23: current hosting is public at
+> `https://marketplace.evinced-infra.group` in `ev-infra-group` without IAP.
+> See `docs/web-hosting.md` for live hosting. This spec preserves the original
+> SSO-gated design context.
+
 **Status:** Draft (autopilot) · **Date:** 2026-06-06 · **Owner:** Aryeh Kiovetsky
 **Audience:** Evinced engineering (internal)
 **Changelog:** v2 incorporates the four-lens red-team
