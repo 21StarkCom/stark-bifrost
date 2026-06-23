@@ -1,6 +1,6 @@
 # stark-marketplace
 
-Canonical, multi-runtime marketplace for **stark** bundles. One source of truth (`catalog/`) renders into per-runtime trees for **Claude Code**, **Codex**, and **Gemini CLI**, plus a signed web registry served behind SSO at [marketplace.evinced.rocks](https://marketplace.evinced.rocks).
+Canonical, multi-runtime marketplace for **stark** bundles. One source of truth (`catalog/`) renders into per-runtime trees for **Claude Code**, **Codex**, and **Gemini CLI**, plus a signed web registry served at [marketplace.evinced-infra.group](https://marketplace.evinced-infra.group).
 
 The repo is also a **native Claude Code marketplace**: `.claude-plugin/marketplace.json` at the repo root is the manifest CC reads directly — no custom client.
 
@@ -65,7 +65,8 @@ npm run build      # tsc --noEmit && vite build
 npm test
 ```
 
-Static origin (`server/`) is the Cloud Run image fronting the registry behind IAP.
+Static origin (`server/`) is the Cloud Run image fronting the registry behind the
+`ev-infra-group` platform load balancer.
 
 ## Architecture, in one paragraph
 
@@ -94,7 +95,7 @@ Full threat model and controls: [`docs/SECURITY.md`](docs/SECURITY.md).
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to add or change a bundle/artifact.
 - [`docs/native-install-loop.md`](docs/native-install-loop.md) — end-to-end install via CC native marketplace.
 - [`docs/SECURITY.md`](docs/SECURITY.md) — trust model, signing, allowlist process, branch protection.
-- [`docs/web-hosting.md`](docs/web-hosting.md) — Cloud Run + IAP wiring for `marketplace.evinced.rocks`.
+- [`docs/web-hosting.md`](docs/web-hosting.md) — Cloud Run + LB wiring for `marketplace.evinced-infra.group`.
 - [`web/README.md`](web/README.md) — SPA-specific dev notes.
 
 ## License & ownership

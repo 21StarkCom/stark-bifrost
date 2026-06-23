@@ -8,17 +8,17 @@ on:
 
 permissions:
   contents: read
-  id-token: write   # keyless WIF auth to deploy the IAP-gated Cloud Run origin
+  id-token: write   # keyless WIF auth to deploy the Cloud Run origin
 
-# Deploy target — the IAP-gated static origin behind the shared platform LB
-# (marketplace.evinced.rocks). Provisioned in infra-ai-platform; see
+# Deploy target — the static origin behind the ev-infra-group shared platform LB
+# (marketplace.evinced-infra.group). Provisioned in ev-infra-group; see
 # docs/web-hosting.md. Repo-level vars carry the env-specific WIF identity.
 env:
-  GCP_PROJECT_ID: infra-ai-platform
-  GCP_REGION: us-east1
+  GCP_PROJECT_ID: ev-infra-group
+  GCP_REGION: us-central1
   GAR_REPO: stark-marketplace
   CR_SERVICE: stark-marketplace
-  RUNTIME_SA: marketplace-runtime@infra-ai-platform.iam.gserviceaccount.com
+  RUNTIME_SA: stark-marketplace-run@ev-infra-group.iam.gserviceaccount.com
   # Opt into Node 24 for JS actions ahead of the Sep 2026 forced cutover.
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
@@ -60,7 +60,7 @@ jobs:
           if-no-files-found: error
 
       # ── Build the image (Go static server + web/dist) and deploy to Cloud Run ──
-      # Only on main / manual dispatch; requires the infra-ai-platform identity
+      # Only on main / manual dispatch; requires the ev-infra-group identity
       # (CI SA + WIF + GAR + run.developer) to already be applied.
       - name: Authenticate to Google Cloud (WIF)
         if: github.ref == 'refs/heads/main'
@@ -80,15 +80,15 @@ jobs:
           docker build -t "${IMAGE}:${GITHUB_SHA}" -t "${IMAGE}:latest" .
           docker push "${IMAGE}:${GITHUB_SHA}"
           docker push "${IMAGE}:latest"
-      - name: Deploy to Cloud Run (behind IAP LB)
+      - name: Deploy to Cloud Run (behind platform LB)
         if: github.ref == 'refs/heads/main'
         run: |
           set -euo pipefail
           IMAGE="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GAR_REPO}/${CR_SERVICE}:${GITHUB_SHA}"
           # No --allow-unauthenticated: the allUsers run.invoker binding is owned
-          # by Terraform (infra-ai-platform), so this run.developer SA never needs
+          # by Terraform (ev-infra-group), so this run.developer SA never needs
           # run.setIamPolicy. ingress=internal-and-cloud-load-balancing blocks the
-          # public *.run.app URL; IAP gates users at the LB edge.
+          # public *.run.app URL; public traffic enters through the platform LB.
           gcloud run deploy "${CR_SERVICE}" \
             --project "${GCP_PROJECT_ID}" \
             --region "${GCP_REGION}" \
