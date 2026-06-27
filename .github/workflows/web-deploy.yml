@@ -25,11 +25,17 @@ env:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    # Gate the WIF→Cloud Run deploy behind the 'production' environment, whose
+    # deployment_branch_policy admits only protected branches (main). Blocks a
+    # workflow_dispatch from a non-main ref from ever reaching the deploy steps,
+    # and gives a hook for required reviewers later. (Build/test steps below are
+    # already main/dispatch-only since this workflow has no PR trigger.)
+    environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       # ── Build the SPA + stage the engine output as one content-hashed unit ──
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: npm
@@ -53,7 +59,7 @@ jobs:
           cp index.json web/dist/index.json
           cp bundles/*.json web/dist/bundles/ 2>/dev/null || true
       - name: Upload SPA+index artifact (atomic unit)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: web-dist
           path: web/dist
@@ -64,13 +70,13 @@ jobs:
       # (CI SA + WIF + GAR + run.developer) to already be applied.
       - name: Authenticate to Google Cloud (WIF)
         if: github.ref == 'refs/heads/main'
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.GCP_DEPLOY_SA }}
       - name: Set up gcloud
         if: github.ref == 'refs/heads/main'
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f # v2
       - name: Build + push image to Artifact Registry
         if: github.ref == 'refs/heads/main'
         run: |
