@@ -25,6 +25,12 @@ env:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    # Gate the WIF→Cloud Run deploy behind the 'production' environment, whose
+    # deployment_branch_policy admits only protected branches (main). Blocks a
+    # workflow_dispatch from a non-main ref from ever reaching the deploy steps,
+    # and gives a hook for required reviewers later. (Build/test steps below are
+    # already main/dispatch-only since this workflow has no PR trigger.)
+    environment: production
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
