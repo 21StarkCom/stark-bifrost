@@ -6,6 +6,7 @@
  * differ. Delegates everything to `tools/red_team_lib.ts`.
  */
 
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -17,6 +18,7 @@ import {
   redTeamPromptsDir,
   resolveDbPath,
   type PersonaSlug,
+  sidecarPathFor,
   VALID_PERSONAS,
 } from "./red_team_lib.ts";
 
@@ -26,6 +28,8 @@ const DEFAULT_TIMEOUT_MS = 900_000;
 interface CliArgs {
   plan: string;
   sourceSpec: string | null;
+  designDispositions: string | null;
+  noDesignDispositions: boolean;
   model: string;
   noSidecar: boolean;
   noAudit: boolean;
@@ -33,12 +37,15 @@ interface CliArgs {
   replayTranscript: string | null;
   classificationOverride: ClassLevel | null;
   personas: PersonaSlug[];
+  fold: boolean;
 }
 
 function parseArgs(argv: string[]): CliArgs {
   const args: CliArgs = {
     plan: "",
     sourceSpec: null,
+    designDispositions: null,
+    noDesignDispositions: false,
     model: DEFAULT_MODEL,
     noSidecar: false,
     noAudit: false,
@@ -46,6 +53,7 @@ function parseArgs(argv: string[]): CliArgs {
     replayTranscript: null,
     classificationOverride: null,
     personas: [...VALID_PERSONAS],
+    fold: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]!;
@@ -60,6 +68,12 @@ function parseArgs(argv: string[]): CliArgs {
         break;
       case "--source-spec":
         args.sourceSpec = next();
+        break;
+      case "--design-dispositions":
+        args.designDispositions = next();
+        break;
+      case "--no-design-dispositions":
+        args.noDesignDispositions = true;
         break;
       case "--model":
         args.model = next();
@@ -89,6 +103,9 @@ function parseArgs(argv: string[]): CliArgs {
         args.classificationOverride = v;
         break;
       }
+      case "--fold":
+        args.fold = true;
+        break;
       case "-h":
       case "--help":
         printHelp();
@@ -107,23 +124,30 @@ function parseArgs(argv: string[]): CliArgs {
 function printHelp(): void {
   process.stdout.write(`usage: red_team_plan.ts [-h] --plan PLAN
                         [--source-spec SOURCE_SPEC]
+                        [--design-dispositions PATH] [--no-design-dispositions]
                         [--model MODEL]
                         [--no-sidecar] [--no-audit] [--json]
                         [--replay-transcript PATH]
                         [--classification-override LEVEL]
+                        [--fold]
 
 Adversarial red-team review of an execution plan doc (TS port).
 
 options:
   -h, --help                       show this help message and exit
   --plan PLAN                      Path to the plan markdown file.
-  --source-spec SOURCE_SPEC        Optional source-spec file.
+  --source-spec SOURCE_SPEC        Optional source-spec (design) file.
+  --design-dispositions PATH       Design-stage red-team sidecar to thread in for
+                                   plan-stage dedup. Default: auto-discover the
+                                   source-spec's <design>.red-team.md sidecar.
+  --no-design-dispositions         Disable design-dispositions threading.
   --model MODEL                    Override the configured red-team model.
   --no-sidecar                     Skip writing the <plan>.red-team.md sidecar.
   --no-audit                       Skip the SQLite audit row.
   --json                           Emit a single JSON object on stdout.
   --replay-transcript PATH         Phase 1 deterministic seam — bypass live model.
   --classification-override LEVEL  Override the classification gate (public|internal|confidential|restricted).
+  --fold                           After a successful challenge, fold the fix plan into the artifact via red_team_fold.ts (non-fatal).
 `);
 }
 
@@ -162,6 +186,43 @@ async function main(argv: string[]): Promise<number> {
     ? fs.readFileSync(sourceSpecPath, "utf8")
     : artifact;
 
+  // Task #5 — plan-stage dedup. Thread the design's resolved red-team sidecar
+  // (`<design>.red-team.md`) into the plan committee so it stops re-deriving
+  // concerns already raised + resolved at the design stage. Resolution order:
+  //   explicit --design-dispositions PATH  >  auto: the source-spec's sidecar
+  // `--no-design-dispositions` opts out entirely. Missing/unreadable → silent
+  // skip (the plan committee just runs without the dedup context).
+  let designDispositions: string | null = null;
+  if (!args.noDesignDispositions) {
+    let dispPath: string | null = null;
+    if (args.designDispositions) {
+      dispPath = path.resolve(args.designDispositions);
+      if (!fs.existsSync(dispPath)) {
+        const envelope = {
+          status: "error",
+          error: `design-dispositions file not found: ${dispPath}`,
+        };
+        process.stdout.write(JSON.stringify(envelope, null, 2) + "\n");
+        return 2;
+      }
+    } else if (sourceSpecPath) {
+      const auto = sidecarPathFor(sourceSpecPath);
+      if (auto !== planPath && fs.existsSync(auto)) dispPath = auto;
+    }
+    if (dispPath) {
+      try {
+        designDispositions = fs.readFileSync(dispPath, "utf8");
+        process.stderr.write(
+          `red_team_plan: threading design dispositions from ${dispPath}\n`,
+        );
+      } catch (err) {
+        process.stderr.write(
+          `red_team_plan: could not read design dispositions ${dispPath} (non-fatal): ${(err as Error).message}\n`,
+        );
+      }
+    }
+  }
+
   const resolved = resolveDbPath();
   const ctx = buildRunContext({
     stage: "plan",
@@ -178,6 +239,7 @@ async function main(argv: string[]): Promise<number> {
     personas: args.personas,
     artifact,
     sourceSpec,
+    designDispositions: designDispositions ?? undefined,
     model: args.model,
     timeoutMs: DEFAULT_TIMEOUT_MS,
     dbPath: resolved.db_path,
@@ -210,6 +272,45 @@ async function main(argv: string[]): Promise<number> {
       }
     }
   }
+  // Non-fatal convenience post-step: after a successful challenge that wrote a
+  // sidecar, fold the fix plan into the artifact by shelling out to the
+  // standalone fold CLI (`red_team_fold.ts`, the reusable unit). This is sugar
+  // over that CLI — the challenge has already succeeded, written its sidecar,
+  // and audited; a fold failure is logged but never changes the challenge's
+  // exit code or its stdout/JSON contract. `result.sidecar_path` is null under
+  // `--no-sidecar`, so that case is subsumed by the truthiness guard. (These
+  // dispatchers have no `--dry-run`.)
+  if (args.fold && result.sidecar_path && result.status !== "error") {
+    const foldEntry = new URL("./red_team_fold.ts", import.meta.url).pathname;
+    const foldArgs = ["--experimental-strip-types", foldEntry, "--artifact", args.plan];
+    if (args.sourceSpec) foldArgs.push("--source-spec", args.sourceSpec);
+    // We deliberately never pass `--json` to fold. Under the challenge's own
+    // `--json` we have already emitted the single JSON object that contract
+    // promises; a second JSON envelope on stdout would corrupt it. So under
+    // `--json` we route fold's stdout to *our* stderr (fd 2) — stdout stays
+    // exactly one JSON object — and log a one-line note to stderr. In human
+    // mode fold's summary flows to stdout after a separator.
+    if (args.json) {
+      process.stderr.write(
+        `red_team_plan: --fold running fold step (output routed to stderr to preserve --json stdout)\n`,
+      );
+    } else {
+      process.stdout.write(`\n--- fold step ---\n`);
+    }
+    const r = spawnSync(process.execPath, foldArgs, {
+      stdio: ["inherit", args.json ? 2 : "inherit", "inherit"],
+    });
+    if (r.error) {
+      process.stderr.write(
+        `red_team_plan: --fold step failed to spawn (non-fatal): ${r.error.message}\n`,
+      );
+    } else if (typeof r.status === "number" && r.status !== 0) {
+      process.stderr.write(
+        `red_team_plan: --fold step exited ${r.status} (non-fatal; challenge already succeeded)\n`,
+      );
+    }
+  }
+
   if (result.status === "error") return 2;
   return 0;
 }
