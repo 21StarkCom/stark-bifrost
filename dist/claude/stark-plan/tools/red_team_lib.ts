@@ -51,6 +51,15 @@ import {
 import { resolveDb } from "./red_team_db_resolver.ts";
 import { resolveOpenaiApiKey } from "./preflight_lib.ts";
 import { assetPromptsDir, assetConfigPath } from "./asset_root_lib.ts";
+import { computeDispatchCost } from "./cost_lib.ts";
+import {
+  DEFAULT_VERIFY_CONFIG,
+  refuteFindings,
+  verifyKillSwitchActive,
+  type RefuteFn,
+  type RefuteResult,
+  type VerifyConfig,
+} from "./red_team_verify_lib.ts";
 
 // ── Types ────────────────────────────────────────────────────────────────
 
@@ -214,6 +223,45 @@ export const BLOCKING_SEVERITIES: ReadonlySet<Severity> = new Set([
   "high",
 ]);
 
+/** Concern text that asserts a prompt-injection was found. */
+const INJECTION_CLAIM_RE = /prompt\s+injection\s+detected/i;
+/** A verbatim quoted span of ≥12 chars — evidence a real injection was cited. */
+const INJECTION_SPAN_RE = /["'`][^"'`\n]{12,}["'`]/;
+
+/**
+ * Demote advisory injection findings that cite no verbatim span.
+ *
+ * The AUTHORITATIVE injection gate is the host `preDispatchSensitiveGate`,
+ * which refuses the run pre-dispatch on real injection patterns — so any
+ * committee "prompt injection detected" finding is advisory, not the gate.
+ * Across 201 runs, 68 such findings (100% `critical`, ~a third of all runs)
+ * were false positives: the model flagged the artifact's OWN authored
+ * directive-shaped text (most often a plan's execution/`Global Constraints`
+ * preamble) as an attack, with no quoted span. A real injection the host
+ * patterns missed would quote the offending span (the preamble now requires
+ * it); an unquoted injection claim is the FP shape. Cap those at `low` so
+ * they still surface but stop halting the run. Non-injection findings and
+ * span-citing injection findings are left exactly as the committee rated
+ * them — this only touches the proven-false-positive shape.
+ */
+export function demoteAdvisoryInjectionFindings(
+  findings: readonly RedTeamFinding[],
+): { findings: RedTeamFinding[]; demoted: number } {
+  let demoted = 0;
+  const out = findings.map((f) => {
+    if (
+      BLOCKING_SEVERITIES.has(f.severity) &&
+      INJECTION_CLAIM_RE.test(f.concern) &&
+      !INJECTION_SPAN_RE.test(f.concern)
+    ) {
+      demoted++;
+      return { ...f, severity: "low" as Severity };
+    }
+    return f;
+  });
+  return { findings: out, demoted };
+}
+
 export const REPO_ROOT = (() => {
   // The lib lives at <repo>/tools/red_team_lib.ts. Walk up two levels for
   // the repo root so dispatchers can resolve sibling paths (scripts/,
@@ -283,8 +331,14 @@ export function assemblePrompt(args: {
   artifact: string;
   sourceSpec: string;
   artifactName?: string;
+  /** Plan-stage only: the resolved red-team sidecar from the *design* stage
+   *  (`<design>.red-team.md`). When present it is threaded as an additional
+   *  guarded input block so the plan committee can see which concerns were
+   *  already raised and resolved at design time and stop re-litigating them
+   *  (task #5 — plan-stage dedup). */
+  designDispositions?: string;
 }): string {
-  const { prompts, personas, artifact, sourceSpec } = args;
+  const { prompts, personas, artifact, sourceSpec, designDispositions } = args;
   const parts: string[] = [];
   parts.push(prompts.preamble);
   parts.push("");
@@ -307,6 +361,12 @@ export function assemblePrompt(args: {
   parts.push(sourceSpec);
   parts.push(`<<<RED_TEAM_INPUT_END name="source_spec">>>`);
   parts.push("");
+  if (designDispositions && designDispositions.trim()) {
+    parts.push(`<<<RED_TEAM_INPUT name="design_dispositions">>>`);
+    parts.push(designDispositions);
+    parts.push(`<<<RED_TEAM_INPUT_END name="design_dispositions">>>`);
+    parts.push("");
+  }
   return parts.join("\n");
 }
 
@@ -342,9 +402,17 @@ export function redact(text: string): string {
 }
 
 /**
- * Pre-dispatch sensitive-data gate. Scan the assembled provider request
- * (prompt + artifact + source-spec) for token / key / PII patterns AND
+ * Pre-dispatch sensitive-data gate. Scan the **untrusted input** (artifact +
+ * source-spec + any threaded dispositions) for token / key / PII patterns AND
  * prompt-injection directives that try to exfiltrate adjacent files.
+ *
+ * IMPORTANT: pass only the untrusted document text, NOT the full assembled
+ * prompt. Our own authored preamble/persona instructions legitimately quote
+ * attacker phrases as *examples* (e.g. `"ignore previous instructions"` in the
+ * injection-defense section); scanning them self-trips the gate and blocks
+ * every run. Route the scan through `untrustedGatePayload()` so only the
+ * document under review is inspected. (See the `injection_ignore_prior`
+ * self-trip regression this guards against.)
  *
  * Returns a non-empty array of matched pattern names when the gate should
  * refuse, or an empty array when clean. The caller writes an audit row
@@ -377,6 +445,19 @@ export function preDispatchSensitiveGate(payload: string): string[] {
     if (pattern.test(payload)) hits.push(name);
   }
   return hits;
+}
+
+/**
+ * Build the payload the pre-dispatch gate should scan: only the untrusted
+ * document text (artifact + source-spec + any threaded dispositions), never
+ * our own authored preamble/persona prompts. Keeps the gate focused on the
+ * document under review and prevents the preamble's example attacker phrases
+ * from self-tripping it.
+ */
+export function untrustedGatePayload(
+  parts: ReadonlyArray<string | null | undefined>,
+): string {
+  return parts.filter((p): p is string => typeof p === "string" && p.length > 0).join("\n");
 }
 
 // ── Sandbox ──────────────────────────────────────────────────────────────
@@ -749,7 +830,11 @@ export function validateFindings(rawJson: string): {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     void i;
   }
-  return { findings: out, invalid_count: invalid, parse_error: null };
+  // Advisory-injection demotion: the host pre-dispatch gate is the real
+  // injection blocker; an unquoted committee "prompt injection" claim is the
+  // proven false-positive shape (see demoteAdvisoryInjectionFindings).
+  const { findings: normalized } = demoteAdvisoryInjectionFindings(out);
+  return { findings: normalized, invalid_count: invalid, parse_error: null };
 }
 
 function isObject(v: unknown): v is Record<string, unknown> {
@@ -863,6 +948,10 @@ export interface RecordRunInput {
   repo?: string | null;
   artifact_relative_path?: string | null;
   pr_number?: number | null;
+  fix_plan_status?: FixPlanStatus | null;
+  fix_plan_md?: string | null;
+  fix_plan_json?: string | null;
+  fix_plan_cost_usd?: number | null;
 }
 
 /** Persist one red-team run row. TS-native after Phase 5b — calls
@@ -945,12 +1034,54 @@ function escapeBlock(text: string): string {
   return text.replace(/```/g, "``\\`");
 }
 
+/**
+ * Render the refutation-pass audit trail: the drop/downgrade summary plus a
+ * per-finding table of what the refuter did and the span it cited. This is the
+ * transparency record — every recalibration is auditable by a human.
+ */
+export function renderRefutationSection(r: RefuteResult): string {
+  const s = r.summary;
+  const parts: string[] = [];
+  parts.push("## Refutation pass");
+  parts.push("");
+  parts.push(
+    `- ${s.total} findings challenged → **${s.upheld} upheld, ${s.downgraded} downgraded, ${s.dropped} dropped**` +
+      `, ${s.skipped} skipped${s.errors ? ` (${s.errors} refuter errors — findings kept)` : ""}`,
+  );
+  const changed = r.trail.filter((t) => t.action === "dropped" || t.action === "downgraded");
+  if (changed.length > 0) {
+    parts.push("");
+    parts.push("| Finding | Action | Severity | Lens | Cited span |");
+    parts.push("| --- | --- | --- | --- | --- |");
+    for (const t of changed) {
+      const v = t.verdicts.find((x) => x.cited_span) ?? t.verdicts[0];
+      const sev =
+        t.action === "downgraded"
+          ? `${t.original_severity} → ${t.final_severity}`
+          : t.original_severity;
+      // Collapse newlines, then neutralize table-breaking pipes via the HTML
+      // entity (renders as `|` in GFM tables) instead of a backslash escape —
+      // an entity introduces no meta-char, so this is a complete, single-pass
+      // sanitization (avoids js/incomplete-sanitization). The span is already
+      // redacted + markdown-escaped by escapeInline above.
+      const span = v?.cited_span
+        ? redact(escapeInline(v.cited_span)).replace(/\s*\n\s*/g, " ").replace(/\|/g, "&#124;").slice(0, 120)
+        : "—";
+      parts.push(
+        `| \`${t.id}\` | ${t.action} | ${sev} | ${v?.lens ?? "—"} | ${span} |`,
+      );
+    }
+  }
+  return parts.join("\n");
+}
+
 export function renderSidecarMarkdown(args: {
   ctx: RedTeamRunContext;
   result: RedTeamResult;
   model: string;
   fixPlanStatus?: FixPlanStatus;
   fixPlan?: RedTeamFixPlan | null;
+  refinement?: RefuteResult | null;
 }): string {
   const { ctx, result, model } = args;
   const fixPlanStatus: FixPlanStatus = args.fixPlanStatus ?? "skipped_disabled";
@@ -971,6 +1102,10 @@ export function renderSidecarMarkdown(args: {
     `- **Cost:** $${result.cost_usd.toFixed(4)} | **Duration:** ${result.duration_s.toFixed(1)}s`,
   );
   parts.push("");
+  if (args.refinement) {
+    parts.push(renderRefutationSection(args.refinement));
+    parts.push("");
+  }
   if (result.synthesis) {
     parts.push("## Synthesis");
     parts.push("");
@@ -1026,9 +1161,6 @@ export function renderSidecarMarkdown(args: {
         parts.push("");
       }
     }
-    // Suppress the unused-variable lint for callers that don't yet pull
-    // structured identity fields into the rendered sidecar.
-    void escapeInline;
   }
   parts.push("");
   parts.push(renderFixPlanSection({ status: fixPlanStatus, fixPlan }));
@@ -1059,6 +1191,10 @@ export interface DispatchArgs {
   personas: PersonaSlug[];
   artifact: string;
   sourceSpec: string;
+  /** Plan-stage only: content of the design's resolved red-team sidecar
+   *  (`<design>.red-team.md`), threaded to the plan committee so it stops
+   *  re-deriving already-resolved design concerns (task #5). */
+  designDispositions?: string;
   model: string;
   /** Per-run timeout for the codex subprocess. */
   timeoutMs: number;
@@ -1087,9 +1223,10 @@ export interface DispatchArgs {
   enableFixPlanForCalibration?: boolean;
   /** Optional per-run cost budget (USD). If provided, the fix-plan resolver
    *  refuses on `challenge.cost_usd >= budget` and warns when the combined
-   *  cost crosses the budget. TS dispatch currently reports `cost_usd: 0`,
-   *  so leaving this undefined is the right default until cost tracking
-   *  lands. */
+   *  cost crosses the budget. `challenge.cost_usd` is computed via
+   *  `computeDispatchCost` for live codex dispatch; mocked `codexFn` runs
+   *  (e.g. tests) still report `cost_usd: 0` since no real tokens were
+   *  spent. */
   perRunBudgetUsd?: number;
   /** Mock the fix-plan codex call separately from the challenge codex.
    *  Falls back to `codexFn` when unset (tests typically share the mock). */
@@ -1097,6 +1234,17 @@ export interface DispatchArgs {
   /** Optional fix-plan config override. Tests use this to pin behavior
    *  independent of the on-disk `red_team.fix_plan` defaults. */
   fixPlanCfg?: FixPlanConfig;
+  /** Refutation-pass (Task #2) override config. When unset, `dispatchAsync`
+   *  loads `red_team.verify`. */
+  verifyCfg?: VerifyConfig;
+  /** Test seam for the refutation pass — overrides the real Claude dispatch. */
+  refuteFn?: RefuteFn;
+  /** Pre-computed refutation result. `dispatchAsync` runs the async refuter
+   *  and threads the survivors here so sync `dispatch()` uses them for
+   *  countBlocking / status / sidecar / audit. Callers other than
+   *  `dispatchAsync` normally leave this unset (sync dispatch does not run the
+   *  async refuter). */
+  refinement?: RefuteResult | null;
 }
 
 /**
@@ -1108,12 +1256,21 @@ export interface DispatchArgs {
 export function dispatch(args: DispatchArgs): DispatchResult {
   const { ctx, prompts, personas, artifact, sourceSpec, model } = args;
 
-  // Build the assembled provider request first so the pre-dispatch gate
-  // sees the exact bytes the model would receive.
-  const prompt = assemblePrompt({ prompts, personas, artifact, sourceSpec });
+  // Build the assembled provider request.
+  const prompt = assemblePrompt({
+    prompts,
+    personas,
+    artifact,
+    sourceSpec,
+    designDispositions: args.designDispositions,
+  });
 
-  // Pre-dispatch sensitive-data gate.
-  const sensitiveHits = preDispatchSensitiveGate(prompt);
+  // Pre-dispatch sensitive-data gate — scan ONLY the untrusted document text
+  // (artifact + source-spec), never the assembled prompt: our own preamble
+  // quotes attacker phrases as examples and would self-trip the gate.
+  const sensitiveHits = preDispatchSensitiveGate(
+    untrustedGatePayload([artifact, sourceSpec]),
+  );
   if (sensitiveHits.length > 0) {
     return makeBlocked(
       ctx, model,
@@ -1179,10 +1336,24 @@ export function dispatch(args: DispatchArgs): DispatchResult {
       human_review_count: countHumanReview(validated.findings),
       raw_output: dispatched.raw_output,
       duration_s: dispatched.duration_s,
-      cost_usd: 0,
+      cost_usd: computeDispatchCost(model, dispatched.input_tokens, dispatched.output_tokens),
       error: validated.parse_error ?? dispatched.error ?? null,
       input_tokens: dispatched.input_tokens,
       output_tokens: dispatched.output_tokens,
+    };
+  }
+
+  // Refutation pass (Task #2): `dispatchAsync` runs the async Claude refuter
+  // and threads the surviving/recalibrated findings here. Apply them BEFORE
+  // countBlocking/deriveStatus/fix-plan/sidecar/audit so the gate + all
+  // downstream artifacts see the refuted set. No refinement (sync dispatch,
+  // replay, disabled, or kill-switch) → result is unchanged.
+  if (args.refinement) {
+    result = {
+      ...result,
+      findings: args.refinement.findings,
+      blocking_count: countBlocking(args.refinement.findings),
+      human_review_count: countHumanReview(args.refinement.findings),
     };
   }
 
@@ -1202,13 +1373,14 @@ export function dispatch(args: DispatchArgs): DispatchResult {
         cfg: args.fixPlanCfg,
       });
 
-  // Render sidecar (now including the fix-plan section).
+  // Render sidecar (now including the refutation + fix-plan sections).
   const sidecarBody = renderSidecarMarkdown({
     ctx,
     result,
     model,
     fixPlanStatus: fixPlanResolution.status,
     fixPlan: fixPlanResolution.fixPlan,
+    refinement: args.refinement,
   });
   const sidecarPath = args.noSidecar
     ? null
@@ -1230,7 +1402,18 @@ export function dispatch(args: DispatchArgs): DispatchResult {
   // Audit write.
   if (!args.noAudit) {
     try {
-      auditPersistRun(ctx, result, model, args.dbPath);
+      auditPersistRun(
+        ctx,
+        result,
+        model,
+        args.dbPath,
+        fixPlanResolution.status,
+        fixPlanResolution.fixPlan,
+        renderFixPlanSection({
+          status: fixPlanResolution.status,
+          fixPlan: fixPlanResolution.fixPlan,
+        }),
+      );
     } catch (err) {
       console.error(
         `red_team_lib: audit persist failed (non-fatal): ${(err as Error).message}`,
@@ -1541,11 +1724,17 @@ export async function dispatchAsync(
     personas: args.personas,
     artifact: args.artifact,
     sourceSpec: args.sourceSpec,
+    designDispositions: args.designDispositions,
   });
   // Skip the codex spawn if the pre-dispatch sensitive gate will refuse
   // anyway — sync dispatch re-runs the gate and returns the blocked
-  // envelope without ever calling our codexFn.
-  if (preDispatchSensitiveGate(prompt).length > 0) {
+  // envelope without ever calling our codexFn. Scan only the untrusted
+  // inputs (matches sync dispatch), not the assembled prompt.
+  if (
+    preDispatchSensitiveGate(
+      untrustedGatePayload([args.artifact, args.sourceSpec]),
+    ).length > 0
+  ) {
     return dispatch(args);
   }
   const dispatched = await dispatchCodexAsync(
@@ -1563,10 +1752,50 @@ export async function dispatchAsync(
       const cfg = loadFixPlanConfig();
       return dispatchCodex(p, m, cfg.timeout_s * 1000);
     });
+
+  // Refutation pass (Task #2): adversarially challenge each committee finding
+  // with a distinct agent (Claude), dropping/downgrading only what the artifact
+  // text refutes. Runs here (async) and threads the survivors into sync
+  // dispatch() via `refinement`. Skipped on committee error, kill switch, or
+  // when disabled — in which case the un-refuted findings flow through.
+  const verifyCfg = args.verifyCfg ?? loadVerifyConfig();
+  let refinement: RefuteResult | null = null;
+  if (
+    verifyCfg.enabled &&
+    !verifyKillSwitchActive() &&
+    !dispatched.error
+  ) {
+    const parsed = parseCommitteeOutput(dispatched.raw_output);
+    const validated = validateFindings(parsed.findings_json);
+    if (!validated.parse_error && validated.findings.length > 0) {
+      try {
+        refinement = await refuteFindings({
+          findings: validated.findings,
+          artifact: args.artifact,
+          sourceSpec: args.sourceSpec,
+          cfg: verifyCfg,
+          refuteFn: args.refuteFn,
+        });
+        const s = refinement.summary;
+        console.error(
+          `red_team_lib: refutation pass — ${s.total} findings → ` +
+            `${s.upheld} upheld, ${s.downgraded} downgraded, ${s.dropped} dropped, ` +
+            `${s.skipped} skipped${s.errors ? ` (${s.errors} refuter errors)` : ""}`,
+        );
+      } catch (err) {
+        console.error(
+          `red_team_lib: refutation pass failed (non-fatal, findings kept as-is): ${(err as Error).message}`,
+        );
+        refinement = null;
+      }
+    }
+  }
+
   return dispatch({
     ...args,
     codexFn: () => dispatched,
     fixPlanCodexFn,
+    refinement,
   });
 }
 
@@ -1611,11 +1840,14 @@ export function parseCodexJsonl(stdout: string): {
   return { text: parts.join("\n"), inputTokens, outputTokens };
 }
 
-function auditPersistRun(
+export function auditPersistRun(
   ctx: RedTeamRunContext,
   result: RedTeamResult,
   model: string,
   dbPath: string,
+  fixPlanStatus: FixPlanStatus,
+  fixPlan: RedTeamFixPlan | null,
+  fixPlanMd: string | null,
 ): void {
   const status = deriveStatus(result);
   recordRun(
@@ -1636,6 +1868,10 @@ function auditPersistRun(
       repo: ctx.repo,
       artifact_relative_path: ctx.artifact_relative_path,
       pr_number: ctx.pr_number,
+      fix_plan_status: fixPlanStatus,
+      fix_plan_md: fixPlanMd,
+      fix_plan_json: fixPlan ? JSON.stringify(fixPlan) : null,
+      fix_plan_cost_usd: fixPlan ? fixPlan.cost_usd : null,
     },
     dbPath,
   );
@@ -1863,6 +2099,32 @@ export function loadFixPlanConfig(): FixPlanConfig {
 
 export function _resetFixPlanConfigCache(): void {
   _fixPlanCfgCache = null;
+}
+
+let _verifyCfgCache: VerifyConfig | null = null;
+
+/** Load the `red_team.verify` config (refutation pass), merged over defaults. */
+export function loadVerifyConfig(): VerifyConfig {
+  if (_verifyCfgCache) return _verifyCfgCache;
+  const cfgPath = assetConfigPath();
+  try {
+    const raw = fs.readFileSync(cfgPath, "utf8");
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const rt = parsed?.["red_team"];
+    const v = isObject(rt) ? (rt["verify"] as unknown) : undefined;
+    if (isObject(v)) {
+      _verifyCfgCache = { ...DEFAULT_VERIFY_CONFIG, ...(v as Partial<VerifyConfig>) };
+      return _verifyCfgCache;
+    }
+  } catch {
+    /* fall through to defaults */
+  }
+  _verifyCfgCache = DEFAULT_VERIFY_CONFIG;
+  return _verifyCfgCache;
+}
+
+export function _resetVerifyConfigCache(): void {
+  _verifyCfgCache = null;
 }
 
 export function killSwitchActive(env: NodeJS.ProcessEnv = process.env): boolean {
@@ -2399,7 +2661,16 @@ export function runRedTeamFixPlan(args: {
       inputOmittedFindingIds: omittedIds,
     });
   }
-  const sensitiveHits = preDispatchSensitiveGate(prompt);
+  // Gate the untrusted inputs (artifact + source-spec + committee findings
+  // text), never the assembled fix-plan prompt whose `fixer.md` template can
+  // legitimately quote attacker phrases as examples.
+  const sensitiveHits = preDispatchSensitiveGate(
+    untrustedGatePayload([
+      args.artifact,
+      args.sourceSpec,
+      filtered.map((f) => `${f.concern}\n${f.consequence}\n${f.counter_proposal}`).join("\n"),
+    ]),
+  );
   if (sensitiveHits.length > 0) {
     return emptyFixPlan({
       error: `pre-dispatch gate refused: matched patterns ${sensitiveHits.join(", ")}`,
@@ -2435,7 +2706,15 @@ export function runRedTeamFixPlan(args: {
   const validated = validateFixPlan(rawDict, blockingIds, args.cfg);
   validated.raw_output = dispatched.raw_output;
   validated.duration_s = dispatched.duration_s;
-  validated.cost_usd = 0;
+  // Note: computed from `dispatched.*`/`args.cfg.model` (not `validated.*`)
+  // because `validated.input_tokens`/`output_tokens`/`model` are only
+  // assigned below — reading them here would see validateFixPlan's
+  // pre-assignment defaults (0 / "").
+  validated.cost_usd = computeDispatchCost(
+    args.cfg.model,
+    dispatched.input_tokens,
+    dispatched.output_tokens,
+  );
   validated.input_tokens = dispatched.input_tokens;
   validated.output_tokens = dispatched.output_tokens;
   validated.model = args.cfg.model;

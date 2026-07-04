@@ -47,6 +47,11 @@ Raw input: `$ARGUMENTS`
 - `--no-pr-comment` — skip **all** PR side effects: do not auto-open a PR and
   do not post the findings comment (even if a PR is already detected). The
   sidecar is still written and committed locally.
+- `--fold` — after a successful challenge, fold the proposed fix plan back into
+  the plan doc by shelling out to `/stark-red-team-fold` (`red_team_fold.ts`):
+  a token-less Claude decider triages each move (accept/modify/reject) and opens
+  a reviewable, never-merged fold PR. Non-fatal — a fold failure never changes
+  the challenge's exit code or JSON output.
 
 ## Constants
 
@@ -118,6 +123,7 @@ flags=()
 [ -n "$dry_run" ] && flags+=(--no-sidecar --no-audit)
 [ -n "$classification_override" ] && flags+=(--classification-override "$classification_override")
 [ -n "$replay_transcript" ] && flags+=(--replay-transcript "$replay_transcript")
+[ -n "$fold" ] && flags+=(--fold)
 
 # TOOLS was set in the preflight preamble.
 output=$(node --experimental-strip-types "$TOOLS/red_team_plan.ts" \
@@ -140,6 +146,10 @@ The dispatcher:
    audit surface — there are no insights events and no remote emit/queue
    (insights telemetry was decommissioned).
 6. Emits a single JSON object on stdout.
+7. If `--fold` and the challenge wrote a sidecar, shells out to `red_team_fold.ts`
+   to fold the fix plan into the plan doc (non-fatal; under `--json` fold's
+   output is routed to stderr so the challenge's single stdout JSON object is
+   preserved). See `/stark-red-team-fold`.
 
 ### 2.2 Parse JSON
 

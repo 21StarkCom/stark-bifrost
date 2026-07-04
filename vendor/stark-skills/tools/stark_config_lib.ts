@@ -61,20 +61,36 @@ export const DEFAULT_MODELS: Record<string, ModelEntry> = {
   gemini: { enabled: true, model_id: "gemini-3.1-pro-preview" },
 };
 
+export interface FoldConfig {
+  enabled: boolean;
+  model: string;
+  timeout_s: number;
+  max_input_chars: number;
+  max_cost_usd: number;
+  open_pr: boolean;
+}
+
+export interface VerifyConfig {
+  enabled: boolean;
+  model: string;
+  timeout_s: number;
+  votes: number;
+  max_input_chars: number;
+}
+
 export interface RedTeamConfig {
   enabled?: boolean;
   agent?: string;
   model?: string;
-  max_rounds?: number;
   halt_on_unresolved?: boolean;
   stages?: Record<string, { enabled?: boolean }>;
   personas?: string[];
   min_severity_to_block?: string;
   timeout_s?: number;
   per_run_budget_usd?: number;
-  stability_overlap_jaccard_min?: number;
   max_input_chars?: number;
   allow_human_review_halt?: boolean;
+  verify?: VerifyConfig;
   fix_plan?: {
     enabled?: boolean;
     model?: string;
@@ -84,6 +100,7 @@ export interface RedTeamConfig {
     max_moves?: number;
     max_input_chars?: number;
   };
+  fold: FoldConfig;
   audit?: {
     retain_full_text?: boolean;
     excerpt_max_chars?: number;
@@ -95,7 +112,6 @@ export const DEFAULT_RED_TEAM: RedTeamConfig = {
   enabled: true,
   agent: "codex",
   model: "gpt-5.5-pro",
-  max_rounds: 2,
   halt_on_unresolved: true,
   stages: {
     design: { enabled: true },
@@ -111,9 +127,19 @@ export const DEFAULT_RED_TEAM: RedTeamConfig = {
   min_severity_to_block: "high",
   timeout_s: 900,
   per_run_budget_usd: 30.0,
-  stability_overlap_jaccard_min: 0.4,
   max_input_chars: 200_000,
   allow_human_review_halt: true,
+  // Per-finding adversarial refutation pass (Task #2). A distinct agent
+  // (Claude) tries to refute each committee finding from the artifact text;
+  // un-refutable findings keep their severity, refuted ones are dropped or
+  // downgraded (never upgraded). See docs/specs/red-team-refutation-pass-*.md.
+  verify: {
+    enabled: true,
+    model: "claude-opus-4-8",
+    timeout_s: 300,
+    votes: 1,
+    max_input_chars: 200_000,
+  },
   fix_plan: {
     enabled: false,
     model: "gpt-5.5-pro",
@@ -122,6 +148,14 @@ export const DEFAULT_RED_TEAM: RedTeamConfig = {
     min_moves: 2,
     max_moves: 6,
     max_input_chars: 200_000,
+  },
+  fold: {
+    enabled: true,
+    model: "claude-opus-4-8",
+    timeout_s: 1200,
+    max_input_chars: 200_000,
+    max_cost_usd: 15,
+    open_pr: true,
   },
   audit: {
     retain_full_text: false,
@@ -270,11 +304,15 @@ const RED_TEAM_LOCKED_FIELDS: ReadonlySet<string> = new Set([
   "halt_on_unresolved",
   "allow_human_review_halt",
   "stages",
+  "verify.enabled",
+  "verify.model",
   "fix_plan.enabled",
   "fix_plan.model",
   "fix_plan.reasoning_effort",
   "fix_plan.min_moves",
   "fix_plan.max_moves",
+  "fold.enabled",
+  "fold.model",
   "audit.retain_full_text",
   "audit.excerpt_max_chars",
 ]);
