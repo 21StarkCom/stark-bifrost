@@ -9,6 +9,29 @@
   },
   "artifacts": [
     {
+      "name": "stark-logging",
+      "type": "skill",
+      "bundle": "stark-analyze",
+      "description": "Use when adding, changing, or reviewing application logging — instrumenting a service/CLI/connector, choosing log levels (DEBUG→FATAL), writing structured logs, or judging whether log lines in a diff are actually useful. Symptoms: fmt.Sprintf/printf into a message, everything at INFO, log-and-return, no correlation id, secrets in logs, per-item spam in loops, logs nobody can grep.",
+      "tags": [
+        "review",
+        "red-team",
+        "quality",
+        "analyze",
+        "logging"
+      ],
+      "category": "review",
+      "maturity": "beta",
+      "version": "0.1.10",
+      "runtimes": [
+        "claude"
+      ],
+      "support": {
+        "claude": "native"
+      },
+      "digest": "sha256:875f647689543c21cda43ff4536e33a8d9b3ac15f42becdc10da7db08c3f1a0e"
+    },
+    {
       "name": "stark-red-team-plan",
       "type": "skill",
       "bundle": "stark-analyze",
@@ -17,11 +40,12 @@
         "review",
         "red-team",
         "quality",
-        "analyze"
+        "analyze",
+        "logging"
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "runtimes": [
         "claude"
       ],
@@ -39,11 +63,12 @@
         "review",
         "red-team",
         "quality",
-        "analyze"
+        "analyze",
+        "logging"
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "runtimes": [
         "claude"
       ],
@@ -61,11 +86,12 @@
         "review",
         "red-team",
         "quality",
-        "analyze"
+        "analyze",
+        "logging"
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "runtimes": [
         "claude"
       ],
@@ -83,11 +109,12 @@
         "review",
         "red-team",
         "quality",
-        "analyze"
+        "analyze",
+        "logging"
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "runtimes": [
         "claude"
       ],
@@ -105,11 +132,12 @@
         "review",
         "red-team",
         "quality",
-        "analyze"
+        "analyze",
+        "logging"
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "runtimes": [
         "claude"
       ],
@@ -127,11 +155,12 @@
         "review",
         "red-team",
         "quality",
-        "analyze"
+        "analyze",
+        "logging"
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "runtimes": [
         "claude"
       ],
@@ -149,11 +178,12 @@
         "review",
         "red-team",
         "quality",
-        "analyze"
+        "analyze",
+        "logging"
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "runtimes": [
         "claude"
       ],
@@ -171,11 +201,12 @@
         "review",
         "red-team",
         "quality",
-        "analyze"
+        "analyze",
+        "logging"
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "runtimes": [
         "claude"
       ],
@@ -193,11 +224,12 @@
         "review",
         "red-team",
         "quality",
-        "analyze"
+        "analyze",
+        "logging"
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "runtimes": [
         "claude"
       ],
@@ -215,11 +247,12 @@
         "review",
         "red-team",
         "quality",
-        "analyze"
+        "analyze",
+        "logging"
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "runtimes": [
         "claude"
       ],
