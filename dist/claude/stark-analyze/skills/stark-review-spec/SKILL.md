@@ -1,12 +1,12 @@
 ---
 name: stark-review-spec
-description: Multi-domain design/spec review with lead/wing fix loop. Codex (gpt-5.5, xhigh reasoning) reviews 8 domains in parallel; Claude (opus-4-8) wing fixes findings. Use for review design, review spec, review architecture.
+description: Multi-domain spec review with lead/wing fix loop. Codex (gpt-5.5, xhigh reasoning) reviews 8 domains in parallel; Claude (opus-4-8) wing fixes findings. Use for review spec, review architecture.
 disable-model-invocation: true
 model: opus
 ---
 Thin wrapper. All review/fix logic lives in `tools/stark_review_doc.ts`. The
 skill captures the path, validates basics, delegates to the TS dispatcher with
-`--prompts-dir design-review`, and surfaces failures from the JSON receipt.
+`--prompts-dir spec-review`, and surfaces failures from the JSON receipt.
 
 ## Preflight
 
@@ -14,10 +14,10 @@ Run [standard preflight](../../standards/preflight.md) with `--workflow stark-re
 
 # stark-review-spec
 
-Lead/wing multi-round design review:
+Lead/wing multi-round spec review:
 
 - **Lead (codex, gpt-5.5, model_reasoning_effort=xhigh)** dispatches 1 review
-  per domain in parallel — 8 domains by default for design review
+  per domain in parallel — 8 domains by default for spec review
   (`completeness`, `security`, `scope`, `api-design`, `data-modeling`,
   `consistency`, `accessibility`, `test-plan`). Concurrency is capped via
   `--codex-concurrent N` (default 3, raises the safe per-agent ceiling for
@@ -27,7 +27,7 @@ Lead/wing multi-round design review:
   dispatcher validates each patch (`old` must occur exactly once) and applies
   it surgically; on partial failure it retries the wing once with the failures
   attached.
-- Each fix round commits the patched document to git so the design's evolution
+- Each fix round commits the patched document to git so the spec's evolution
   is traceable.
 - After the last fix round (or early termination on zero findings), a
   **final review-only round** captures unresolved findings.
@@ -36,10 +36,10 @@ Answers the question: **"Is this the right system?"**
 
 ## Arguments
 
-- `<path>` — path to design/spec/architecture markdown file (required)
-- `--rounds N` — max fix cycles (default: from config `design_review.max_rounds`, ceiling 10)
+- `<path>` — path to spec/architecture markdown file (required)
+- `--rounds N` — max fix cycles (default: from config `spec_review.max_rounds`, ceiling 10)
 - `--dry-run` — review only, no wing fixes, no commits
-- `--force` — proceed even if the design file has uncommitted changes
+- `--force` — proceed even if the spec file has uncommitted changes
 - `--codex-concurrent N` — cap on concurrent codex dispatches (default: 3)
 
 **Raw input:** `$ARGUMENTS`
@@ -55,7 +55,7 @@ To call the dispatcher:
 
 ```bash
 node --experimental-strip-types "$TOOLS/stark_review_doc.ts" \
-    --doc "$DOC" --prompts-dir design-review \
+    --doc "$DOC" --prompts-dir spec-review \
     --repo-dir "$REPO_DIR" --prompts-base "$PROMPTS_BASE" \
     ${ROUNDS:+--rounds "$ROUNDS"} \
     ${CODEX_CONCURRENT:+--codex-concurrent "$CODEX_CONCURRENT"} \
@@ -109,7 +109,7 @@ already streams human progress to the terminal.
 ```bash
 set +e
 RECEIPT_JSON=$(node --experimental-strip-types "$TOOLS/stark_review_doc.ts" \
-    --doc "$DOC" --prompts-dir design-review \
+    --doc "$DOC" --prompts-dir spec-review \
     --repo-dir "$REPO_DIR" --prompts-base "$PROMPTS_BASE" \
     ${ROUNDS:+--rounds "$ROUNDS"} \
     ${CODEX_CONCURRENT:+--codex-concurrent "$CODEX_CONCURRENT"} \
@@ -160,7 +160,7 @@ if [ -n "$WING_ERRORS" ]; then error "Wing fixer issues:"; printf '  %s\n' "$WIN
 On success, print the human summary using fields from the receipt:
 
 ```text
-Design Review Complete — {doc}
+Spec Review Complete — {doc}
 ─────────────────────────────────
 Rounds: {len(rounds)}
   round 1: {findings} findings (fix={fix} noise={noise} ignored={ignored}) — {duration}s
@@ -174,7 +174,7 @@ History: {history_dir}
 If a PR was detected (Phase 2) and `--dry-run` was not set, post:
 
 - **Codex raw findings** under the `stark-codex[bot]` identity — one comment summarizing the lead reviewer's findings (table of severity / domain / section / title from the first review-fix round and the final round).
-- **Wing summary** under the `stark-claude[bot]` identity — the consolidated summary above plus the per-round `git diff` of the design file.
+- **Wing summary** under the `stark-claude[bot]` identity — the consolidated summary above plus the per-round `git diff` of the spec file.
 
 Use the existing `tools/github_app.ts` helper:
 
