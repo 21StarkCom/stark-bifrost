@@ -2,7 +2,7 @@
 name: stark-review-spec-improvement
 type: skill
 description: Improve spec review prompts from assessment feedback. Wraps /stark-review-improvement for spec-review prompts.
-version: 0.1.12
+version: 0.1.13
 maturity: beta
 runtimes:
   - claude
