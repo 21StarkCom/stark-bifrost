@@ -256,7 +256,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:d8b14f829975a56a3b1df901bba90f814b68d72acd644c74b8cdf8daffdf59f4"
+      "digest": "sha256:484f6052b64f1761ce3d29b74c04142b9144025d710144d6734cd82fbaead69e"
     },
     {
       "name": "stark-terraform-review",
