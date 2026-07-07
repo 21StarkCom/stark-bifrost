@@ -1,6 +1,6 @@
 ---
 name: stark-review-spec
-description: Multi-domain spec review with lead/wing fix loop. Codex (gpt-5.5, xhigh reasoning) reviews 8 domains in parallel; Claude (opus-4-8) wing fixes findings. Use for review spec, review architecture.
+description: Multi-domain spec review with lead/wing fix loop. Codex (gpt-5.5, xhigh reasoning) reviews 9 domains in parallel; Claude (opus-4-8) wing fixes findings. Use for review spec, review architecture.
 disable-model-invocation: true
 model: opus
 ---
@@ -17,7 +17,7 @@ Run [standard preflight](../../standards/preflight.md) with `--workflow stark-re
 Lead/wing multi-round spec review:
 
 - **Lead (codex, gpt-5.5, model_reasoning_effort=xhigh)** dispatches 1 review
-  per domain in parallel — 8 domains by default for spec review
+  per domain in parallel — 9 domains by default for spec review
   (`completeness`, `security`, `scope`, `api-design`, `data-modeling`,
   `consistency`, `accessibility`, `test-plan`). Concurrency is capped via
   `--codex-concurrent N` (default 3, raises the safe per-agent ceiling for

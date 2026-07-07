@@ -22,7 +22,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.12",
+      "version": "0.1.13",
       "runtimes": [
         "claude",
         "codex"
@@ -47,7 +47,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.12",
+      "version": "0.1.13",
       "runtimes": [
         "claude",
         "codex"
@@ -72,7 +72,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.12",
+      "version": "0.1.13",
       "runtimes": [
         "claude",
         "codex"
@@ -97,7 +97,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.12",
+      "version": "0.1.13",
       "runtimes": [
         "claude",
         "codex"
@@ -122,7 +122,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.12",
+      "version": "0.1.13",
       "runtimes": [
         "claude",
         "codex"
@@ -137,7 +137,7 @@
       "name": "stark-review-plan",
       "type": "skill",
       "bundle": "stark-analyze",
-      "description": "Multi-domain execution plan review with lead/wing fix loop. Codex (gpt-5.5, xhigh reasoning) reviews 4 adversarial domains in parallel; Claude (opus-4-8) wing fixes findings. Use for review plan, audit deployment plan.",
+      "description": "Multi-domain execution plan review with lead/wing fix loop. Codex (gpt-5.5, xhigh reasoning) reviews 5 adversarial domains in parallel; Claude (opus-4-8) wing fixes findings. Use for review plan, audit deployment plan.",
       "tags": [
         "review",
         "red-team",
@@ -147,7 +147,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.12",
+      "version": "0.1.13",
       "runtimes": [
         "claude",
         "codex"
@@ -156,7 +156,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:4ffb454779d969837f8a3fea489bdddcb9a1662eb393a49304dd9eb6d223aa73"
+      "digest": "sha256:b1b3296c4935a40dbf92725476d071e23753f74b6c0520c62e3bbaabd32d455f"
     },
     {
       "name": "stark-review-spec-improvement",
@@ -172,7 +172,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.12",
+      "version": "0.1.13",
       "runtimes": [
         "claude",
         "codex"
@@ -187,7 +187,7 @@
       "name": "stark-review-spec",
       "type": "skill",
       "bundle": "stark-analyze",
-      "description": "Multi-domain spec review with lead/wing fix loop. Codex (gpt-5.5, xhigh reasoning) reviews 8 domains in parallel; Claude (opus-4-8) wing fixes findings. Use for review spec, review architecture.",
+      "description": "Multi-domain spec review with lead/wing fix loop. Codex (gpt-5.5, xhigh reasoning) reviews 9 domains in parallel; Claude (opus-4-8) wing fixes findings. Use for review spec, review architecture.",
       "tags": [
         "review",
         "red-team",
@@ -197,7 +197,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.12",
+      "version": "0.1.13",
       "runtimes": [
         "claude",
         "codex"
@@ -206,7 +206,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:dee094ca906031469e75438233423787d01b70d6b589a3c8eca6d91c355e5ee5"
+      "digest": "sha256:51fa10688328fe3664e615acc454e45bdb0a692faed3ce398c203da49ff9cd33"
     },
     {
       "name": "stark-review",
@@ -222,7 +222,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.12",
+      "version": "0.1.13",
       "runtimes": [
         "claude",
         "codex"
@@ -232,6 +232,31 @@
         "codex": "native"
       },
       "digest": "sha256:ce7c4379630eb257fc36593ce817d71d367778265368462a19af9669ea37172b"
+    },
+    {
+      "name": "stark-ssot",
+      "type": "skill",
+      "bundle": "stark-analyze",
+      "description": "Use when consolidating or reviewing a single source of truth — duplicated logic, a constant/model-id/URL/timeout copied into a second place, a parser or regex reimplemented, a local policy branch that belongs in a registry, a fallback default wired at a call site, or a value re-derived in the UI. Also on requests to centralize, deduplicate, unify, or \"why is this implemented manually / in two places\". Symptoms in a diff: a hardcoded model id or GCP project, `~/.claude/code-review/...` typed out, a hand-rolled token→USD cost, a re-pasted dispatch/env helper, a duplicated `>=`/threshold check. Do NOT use for code that only looks similar but answers a different question.",
+      "tags": [
+        "review",
+        "red-team",
+        "quality",
+        "analyze",
+        "logging"
+      ],
+      "category": "review",
+      "maturity": "beta",
+      "version": "0.1.13",
+      "runtimes": [
+        "claude",
+        "codex"
+      ],
+      "support": {
+        "claude": "native",
+        "codex": "native"
+      },
+      "digest": "sha256:484f6052b64f1761ce3d29b74c04142b9144025d710144d6734cd82fbaead69e"
     },
     {
       "name": "stark-terraform-review",
@@ -247,7 +272,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.12",
+      "version": "0.1.13",
       "runtimes": [
         "claude",
         "codex"
@@ -272,7 +297,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.12",
+      "version": "0.1.13",
       "runtimes": [
         "claude",
         "codex"
