@@ -2,10 +2,11 @@
 name: stark-review-plan
 type: skill
 description: Multi-domain execution plan review with lead/wing fix loop. Codex (gpt-5.5, xhigh reasoning) reviews 4 adversarial domains in parallel; Claude (opus-4-8) wing fixes findings. Use for review plan, audit deployment plan.
-version: 0.1.11
+version: 0.1.12
 maturity: beta
 runtimes:
   - claude
+  - codex
 model: opus
 disable-model-invocation: true
 ---

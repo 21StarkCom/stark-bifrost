@@ -70,6 +70,32 @@ func TestCodexMapsCommandToSkillWithUsage(t *testing.T) {
 	}
 }
 
+func TestCodexMapsClaudeModelFamilyAliases(t *testing.T) {
+	a := &model.Artifact{
+		Name: "review", Type: model.TypeSkill, Bundle: "stark-review",
+		Description: "PR review.", Version: "0.7.0",
+		Model:    "opus[1m]",
+		Body:     "Review.\n",
+		Runtimes: []model.Runtime{model.RuntimeCodex},
+	}
+	files, findings, err := New().Render(bundleWith(a))
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, ok := findFile(files, ".agents/skills/review/SKILL.md")
+	if !ok {
+		t.Fatalf("expected native Codex skill path; got %v", files)
+	}
+	if !contains(body, "model: gpt-5-codex") {
+		t.Fatalf("model alias should map to codex model, got %q", body)
+	}
+	for _, f := range findings {
+		if contains(f.Msg, `field "model" dropped`) {
+			t.Fatalf("mapped model alias should not be dropped: %+v", findings)
+		}
+	}
+}
+
 func TestCodexAgentEmulationHasHeader(t *testing.T) {
 	a := &model.Artifact{
 		Name: "red-team", Type: model.TypeAgent, Bundle: "stark-review",

@@ -1,5 +1,5 @@
 name: stark-implement
-version: 0.1.2
+version: 0.1.3
 description: Autonomously execute a development phase end-to-end — implement, PR, review, fix, merge, release — via a paired lead/wing agent loop. Maps to spec-kit's implement phase.
 category: implementation
 tags:
@@ -13,6 +13,7 @@ owner:
 maturity: beta
 runtimes:
   - claude
+  - codex
 # Membership manifest consumed by the generator (`stark sync`).
 skills:
   - stark-copilot
