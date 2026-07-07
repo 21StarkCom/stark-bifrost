@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "bundle": {
     "name": "stark-plan",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "description": "Turn a design doc into a phased implementation plan, then decompose it into phased GitHub issues with story points and risk labels. Maps to spec-kit's plan + tasks phases.",
     "category": "planning",
     "tags": [
@@ -19,12 +19,14 @@
       "name": "stark-plan-to-tasks",
       "type": "skill",
       "description": "Decompose spec/plan into phased GitHub issues with story points and risk labels. Use for plan to tasks, decompose plan.",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "runtimes": [
-        "claude"
+        "claude",
+        "codex"
       ],
       "support": {
-        "claude": "native"
+        "claude": "native",
+        "codex": "native"
       },
       "requires": [],
       "diverged": false,
@@ -32,6 +34,13 @@
         "claude": [
           {
             "path": "skills/stark-plan-to-tasks/SKILL.md",
+            "kind": "file",
+            "emulated": false
+          }
+        ],
+        "codex": [
+          {
+            "path": ".agents/skills/stark-plan-to-tasks/SKILL.md",
             "kind": "file",
             "emulated": false
           }
@@ -43,12 +52,14 @@
       "name": "stark-spec-to-plan",
       "type": "skill",
       "description": "Convert spec docs into phased implementation plans via paired lead/wing agents. Lead drafts, wing reviews, fix-loop until approved. Use for plan from spec.",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "runtimes": [
-        "claude"
+        "claude",
+        "codex"
       ],
       "support": {
-        "claude": "native"
+        "claude": "native",
+        "codex": "native"
       },
       "requires": [],
       "diverged": false,
@@ -56,6 +67,13 @@
         "claude": [
           {
             "path": "skills/stark-spec-to-plan/SKILL.md",
+            "kind": "file",
+            "emulated": false
+          }
+        ],
+        "codex": [
+          {
+            "path": ".agents/skills/stark-spec-to-plan/SKILL.md",
             "kind": "file",
             "emulated": false
           }

@@ -38,6 +38,7 @@ func Catalog(cat *model.Catalog) *Result {
 			}
 			checkSlug(r, where, a.Name)
 			checkRuntimesNarrowing(r, where, a, b)
+			checkOpenAICompatibility(r, where, a)
 			checkSecurity(r, where, a)
 			checkFences(r, where, a)
 			checkCapability(r, where, a)

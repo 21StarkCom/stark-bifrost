@@ -33,13 +33,27 @@ func (t *Target) Version() string        { return version }
 
 // modelMap translates canonical model ids → Codex model ids (§6.2 ActionMap).
 func modelMap(canonical string) (string, bool) {
-	switch canonical {
+	switch modelFamily(canonical) {
 	case "opus", "sonnet":
 		return "gpt-5-codex", true
 	case "haiku":
 		return "gpt-5-mini", true
 	default:
 		return "", false
+	}
+}
+
+func modelFamily(canonical string) string {
+	s := strings.ToLower(strings.TrimSpace(canonical))
+	switch {
+	case s == "opus" || strings.HasPrefix(s, "opus[") || strings.HasPrefix(s, "opus-"):
+		return "opus"
+	case s == "sonnet" || strings.HasPrefix(s, "sonnet[") || strings.HasPrefix(s, "sonnet-"):
+		return "sonnet"
+	case s == "haiku" || strings.HasPrefix(s, "haiku[") || strings.HasPrefix(s, "haiku-"):
+		return "haiku"
+	default:
+		return s
 	}
 }
 

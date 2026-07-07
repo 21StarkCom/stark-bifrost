@@ -17,8 +17,8 @@ func TestDefaultsAppliedAndNoted(t *testing.T) {
 	if a.Maturity != model.MaturityBeta {
 		t.Fatalf("maturity = %q, want beta", a.Maturity)
 	}
-	if len(a.Runtimes) != 1 || a.Runtimes[0] != model.RuntimeClaude {
-		t.Fatalf("runtimes = %+v, want [claude]", a.Runtimes)
+	if len(a.Runtimes) != 2 || a.Runtimes[0] != model.RuntimeClaude || a.Runtimes[1] != model.RuntimeCodex {
+		t.Fatalf("runtimes = %+v, want [claude codex]", a.Runtimes)
 	}
 	// every defaulted field must be recorded for the human checklist
 	if len(res.Notes) < 3 {

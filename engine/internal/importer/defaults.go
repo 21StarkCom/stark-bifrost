@@ -9,10 +9,11 @@ const (
 	defaultOwnerEmail = "engineering@21stark.com"
 )
 
-// defaultRuntimes is the conservative single-runtime default for imported artifacts.
-// stark-skills artifacts were authored for Claude Code; widening to codex/gemini is a
-// human decision (recorded as a note), never an import-time guess.
-func defaultRuntimes() []model.Runtime { return []model.Runtime{model.RuntimeClaude} }
+// defaultRuntimes keeps imported Claude Code skills and commands installable on
+// OpenAI/Codex by default. Gemini remains an explicit human compatibility decision.
+func defaultRuntimes() []model.Runtime {
+	return []model.Runtime{model.RuntimeClaude, model.RuntimeCodex}
+}
 
 // applyArtifactDefaults fills the canonical-superset fields that stark-skills source
 // lacks, and records each as a MetaNote for human review (spec §12).
@@ -27,7 +28,7 @@ func applyArtifactDefaults(a *model.Artifact, res *ImportResult, where string) {
 	}
 	if len(a.Runtimes) == 0 {
 		a.Runtimes = defaultRuntimes()
-		res.note(where, "runtimes", "defaulted to [claude]; widen to codex/gemini only after verifying support")
+		res.note(where, "runtimes", "defaulted to [claude, codex]; add gemini only after verifying support")
 	}
 	if len(a.Tags) == 0 {
 		res.note(where, "tags", "no tags imported; add discovery tags")

@@ -2,10 +2,11 @@
 name: stark-init-docs
 type: skill
 description: Scaffold dev docs structure (template/backfill/upgrade/clean modes). Use for init docs, setup docs, scaffold docs.
-version: 0.2.1
+version: 0.2.2
 maturity: beta
 runtimes:
   - claude
+  - codex
 model: opus
 disable-model-invocation: true
 ---
