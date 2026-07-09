@@ -540,11 +540,12 @@
         "release",
         "housekeeping",
         "session",
+        "handover",
         "git"
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "runtimes": [
         "claude",
         "codex"
@@ -556,6 +557,31 @@
       "digest": "sha256:4f26a6a890460cef6458112c1354c6ed83873e6044623c43c29762e4a62b52a8"
     },
     {
+      "name": "stark-handover",
+      "type": "skill",
+      "bundle": "stark-ops",
+      "description": "Use when pausing or splitting work across sessions — before /clear, when context runs low, end of day, switching tasks — or when resuming after one. Triggers: \"handover\", \"handoff\", \"save context\", \"save progress\", \"resume\", \"continue where we left off\", \"what was I doing\". Persists a numbered handover chain + PROGRESS.md tracker per task; resume needs no recap.",
+      "tags": [
+        "release",
+        "housekeeping",
+        "session",
+        "handover",
+        "git"
+      ],
+      "category": "ops",
+      "maturity": "beta",
+      "version": "0.1.4",
+      "runtimes": [
+        "claude",
+        "codex"
+      ],
+      "support": {
+        "claude": "native",
+        "codex": "native"
+      },
+      "digest": "sha256:6ba6326391585d0a30244a40583e96d0f6274d9631a4729f6b95386d43c6f30e"
+    },
+    {
       "name": "stark-housekeeping",
       "type": "skill",
       "bundle": "stark-ops",
@@ -564,11 +590,12 @@
         "release",
         "housekeeping",
         "session",
+        "handover",
         "git"
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "runtimes": [
         "claude",
         "codex"
@@ -588,11 +615,12 @@
         "release",
         "housekeeping",
         "session",
+        "handover",
         "git"
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "runtimes": [
         "claude",
         "codex"
@@ -612,11 +640,12 @@
         "release",
         "housekeeping",
         "session",
+        "handover",
         "git"
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "runtimes": [
         "claude",
         "codex"
