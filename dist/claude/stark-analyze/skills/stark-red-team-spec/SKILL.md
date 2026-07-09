@@ -4,6 +4,12 @@ description: 'Adversarial red-team review of a spec doc. 5 personas (security-tr
 disable-model-invocation: true
 model: opus
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 # stark-red-team-spec
 
 Adversarial committee challenge of a spec document. 5 personas attack the

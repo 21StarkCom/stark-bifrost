@@ -2,7 +2,7 @@
 name: stark-release
 type: skill
 description: 'Cut a release: changelog review (auto-generating from git log if [Unreleased] is empty), version bump, git tag, GitHub Release. Use for release, tag, bump version.'
-version: 0.1.4
+version: 0.1.5
 maturity: beta
 runtimes:
   - claude
@@ -10,6 +10,12 @@ runtimes:
 model: sonnet
 disable-model-invocation: true
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 # Release Management
 
 Reviews accumulated changes in CHANGELOG.md, bumps the version, creates a git tag,

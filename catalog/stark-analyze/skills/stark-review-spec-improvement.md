@@ -2,7 +2,7 @@
 name: stark-review-spec-improvement
 type: skill
 description: Improve spec review prompts from assessment feedback. Wraps /stark-review-improvement for spec-review prompts.
-version: 0.1.15
+version: 0.1.16
 maturity: beta
 runtimes:
   - claude
@@ -10,6 +10,12 @@ runtimes:
 model: opus
 disable-model-invocation: true
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 # stark-review-spec-improvement
 
 Improve spec review prompts based on assessment feedback from `/stark-review-spec` runs.

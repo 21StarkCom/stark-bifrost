@@ -2,7 +2,7 @@
 name: stark-review-plan
 type: skill
 description: Multi-domain execution plan review with lead/wing fix loop. Codex (gpt-5.5, xhigh reasoning) reviews 5 adversarial domains in parallel; Claude (opus-4-8) wing fixes findings. Use for review plan, audit deployment plan.
-version: 0.1.15
+version: 0.1.16
 maturity: beta
 runtimes:
   - claude
@@ -10,6 +10,12 @@ runtimes:
 model: opus
 disable-model-invocation: true
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 Thin wrapper. All review/fix logic lives in `tools/stark_review_doc.ts`. The
 skill captures the path, validates basics, delegates to the TS dispatcher with
 `--prompts-dir plan-review`, and surfaces failures from the JSON receipt.
@@ -22,13 +28,17 @@ Run [standard preflight](../../standards/preflight.md) with `--workflow stark-re
 
 Lead/wing multi-round execution plan review:
 
-- **Lead (codex, gpt-5.5, model_reasoning_effort=xhigh)** dispatches 1 review
-  per domain in parallel — 5 adversarial domains by default for plan review
-  (`completeness`, `security`, `sequencing`, `viability`, `ssot`). Concurrency capped
-  via `--codex-concurrent N` (default 3).
-- **Wing (claude, opus-4-8)** receives the plan + classified `fix` findings
-  and emits a JSON patch block; the dispatcher validates each patch's `old`
-  text is unique and applies surgically.
+- **Lead reviewer** dispatches 1 review per domain in parallel — 5 adversarial
+  domains by default for plan review (`completeness`, `security`, `sequencing`,
+  `viability`, `ssot`). Default agent is codex (gpt-5.5,
+  `model_reasoning_effort=xhigh`); `--lead-agent claude` (or `--fable`) runs it
+  on a Claude model (defaults to `claude-fable-5`). Concurrency capped via
+  `--codex-concurrent N` (default 3).
+- **Wing fixer** receives the plan + classified `fix` findings and emits a JSON
+  patch block; the dispatcher validates each patch's `old` text is unique and
+  applies surgically. Default agent is claude (opus-4-8); `--wing-agent codex`
+  runs the fixer on codex (gpt-5.5 at xhigh). Lead and wing agents are
+  independent.
 - Each fix round commits the patched plan to git for traceability.
 - A final review-only round captures unresolved findings after the last fix
   round.
@@ -47,6 +57,11 @@ For domain definitions and finding-classification criteria, see
 - `--dry-run` — review only, no wing fixes, no commits
 - `--force` — proceed even if the plan file has uncommitted changes
 - `--codex-concurrent N` — cap on concurrent codex dispatches (default: 3)
+- `--lead-agent codex|claude` — which agent runs the lead review (default: `codex`). Use `claude` to run the lead on a Claude model (e.g. Fable). The wing/fixer stays `claude`/opus-4-8 regardless.
+- `--lead-model ID` — override the lead reviewer model (default: `gpt-5.5` for codex, `claude-fable-5` for claude)
+- `--fable` — shorthand for `--lead-agent claude --lead-model claude-fable-5`: run the lead review on Fable 5. Only when explicitly requested.
+- `--wing-agent claude|codex` — which agent runs the wing/fixer (default: `claude`/opus-4-8). `codex` runs the fixer on gpt-5.5 at `model_reasoning_effort="xhigh"`.
+- `--wing-model ID` — override the wing/fixer model (default: `claude-opus-4-8` for claude, `gpt-5.5` for codex)
 
 **Raw input:** `$ARGUMENTS`
 
@@ -60,7 +75,13 @@ PROMPTS_BASE="${STARK_REVIEW_PROMPTS_BASE:-${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/c
 ## Phase 1: Parse arguments + validate
 
 Parse `$ARGUMENTS` for `<path>` (first non-flag positional) and flags
-`--rounds N`, `--dry-run`, `--force`, `--codex-concurrent N`. Bind the path to
+`--rounds N`, `--dry-run`, `--force`, `--codex-concurrent N`,
+`--lead-agent AGENT`, `--lead-model ID`, `--fable`, `--wing-agent AGENT`, and
+`--wing-model ID`. `--fable` sets
+`LEAD_AGENT=claude` (leave `LEAD_MODEL` unset so the dispatcher defaults to
+`claude-fable-5`); explicit `--lead-agent`/`--lead-model` take precedence.
+`--wing-agent`/`--wing-model` set `WING_AGENT`/`WING_MODEL` (leave `WING_MODEL`
+unset for the agent default — `gpt-5.5` at xhigh for codex). Bind the path to
 `DOC` — **never `path`**: under zsh the lowercase `path` parameter is tied to
 `$PATH`, so `path=…` silently clobbers the command search path and every
 dispatched `codex`/`node`/`gh` call dies with `agent_unavailable`.
@@ -150,6 +171,10 @@ RECEIPT_JSON=$(node --experimental-strip-types "$TOOLS/stark_review_doc.ts" \
     --repo-dir "$REPO_DIR" --prompts-base "$PROMPTS_BASE" \
     ${ROUNDS:+--rounds "$ROUNDS"} \
     ${CODEX_CONCURRENT:+--codex-concurrent "$CODEX_CONCURRENT"} \
+    ${LEAD_AGENT:+--lead-agent "$LEAD_AGENT"} \
+    ${LEAD_MODEL:+--lead-model "$LEAD_MODEL"} \
+    ${WING_AGENT:+--wing-agent "$WING_AGENT"} \
+    ${WING_MODEL:+--wing-model "$WING_MODEL"} \
     ${DRY_RUN:+--dry-run} \
     ${FORCE:+--force})
 TS_EXIT=$?
@@ -223,8 +248,13 @@ History: {history_dir}
 Write the receipt to a temp file and run the findings poster. For **every**
 distinct finding across every round it opens a file-level (resolvable) review
 thread on the plan; for findings the wing already fixed it replies + resolves
-the thread immediately. It prints the still-open findings (your work list) and
-writes a map file. Re-running is idempotent (findings already posted are
+the thread immediately. **Each thread is authored by the reviewing LLM's App**
+(the finding's `agent`: codex→stark-codex, claude→stark-claude,
+gemini→stark-gemini) so PR comment authorship attributes findings to the
+reviewer for analytics — `--app` below is only the fallback for reads +
+unmapped agents. It prints the still-open findings (your work list) and
+writes a map file (each entry records its authoring App, so 5c resolves under
+the same one). Re-running is idempotent (findings already posted are
 skipped via an HTML marker).
 
 ```bash

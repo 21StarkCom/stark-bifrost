@@ -2,7 +2,7 @@
 name: stark-init-docs
 type: skill
 description: Scaffold dev docs structure (template/backfill/upgrade/clean modes). Use for init docs, setup docs, scaffold docs.
-version: 0.2.2
+version: 0.2.3
 maturity: beta
 runtimes:
   - claude
@@ -10,6 +10,12 @@ runtimes:
 model: opus
 disable-model-invocation: true
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 # init-docs
 
 Scaffold a standardized developer documentation structure into any repository. Four modes that can be combined (e.g., `--upgrade --backfill`).

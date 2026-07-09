@@ -2,13 +2,19 @@
 name: stark-adr
 type: skill
 description: 'Record and manage Architecture Decision Records (ADRs) under a repo''s docs/adr/. Use for: new ADR, log/record a decision, "create an ADR", supersede an ADR, list ADRs, "why did we decide X". Wraps `brain adr` — MADR-lite, auto-numbered, repo-relative.'
-version: 0.2.2
+version: 0.2.3
 maturity: beta
 runtimes:
   - claude
   - codex
 disable-model-invocation: true
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 # stark-adr
 
 Manage Architecture Decision Records the way the doc convention defines them:

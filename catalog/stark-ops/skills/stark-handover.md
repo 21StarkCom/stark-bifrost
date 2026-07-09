@@ -2,13 +2,19 @@
 name: stark-handover
 type: skill
 description: 'Use when pausing or splitting work across sessions — before /clear, when context runs low, end of day, switching tasks — or when resuming after one. Triggers: "handover", "handoff", "save context", "save progress", "resume", "continue where we left off", "what was I doing". Persists a numbered handover chain + PROGRESS.md tracker per task; resume needs no recap.'
-version: 0.1.4
+version: 0.1.5
 maturity: beta
 runtimes:
   - claude
   - codex
 disable-model-invocation: false
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 # stark-handover
 
 Cross-`/clear` session continuity. Every **save** appends `handover_{N}.md`

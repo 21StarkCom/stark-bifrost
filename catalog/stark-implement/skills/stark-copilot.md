@@ -2,7 +2,7 @@
 name: stark-copilot
 type: skill
 description: 'Autonomous lead/wing implementation: lead subagent implements, wing subagent reviews, fix-loop until wing approves. Use for copilot, paired build.'
-version: 0.1.4
+version: 0.1.5
 maturity: beta
 runtimes:
   - claude
@@ -10,6 +10,12 @@ runtimes:
 model: opus
 disable-model-invocation: true
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 ## Preflight
 
 Run environment validation before proceeding:

@@ -2,7 +2,7 @@
 name: stark-plan-to-tasks
 type: skill
 description: Decompose spec/plan into phased GitHub issues with story points and risk labels. Use for plan to tasks, decompose plan.
-version: 0.1.5
+version: 0.1.6
 maturity: beta
 runtimes:
   - claude
@@ -10,6 +10,12 @@ runtimes:
 model: opus
 disable-model-invocation: true
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 # stark-plan-to-tasks
 
 Decompose a spec/design document into phased GitHub issues. Three LLM passes: quality gate → decomposition → validation. Extracts architectural knowledge to project docs.

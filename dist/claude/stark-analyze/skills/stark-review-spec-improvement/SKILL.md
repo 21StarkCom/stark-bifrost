@@ -4,6 +4,12 @@ description: Improve spec review prompts from assessment feedback. Wraps /stark-
 disable-model-invocation: true
 model: opus
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 # stark-review-spec-improvement
 
 Improve spec review prompts based on assessment feedback from `/stark-review-spec` runs.

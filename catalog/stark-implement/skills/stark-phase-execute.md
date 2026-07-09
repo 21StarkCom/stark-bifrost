@@ -2,7 +2,7 @@
 name: stark-phase-execute
 type: skill
 description: 'Autonomously execute a dev phase: implement tasks, PR, review, fix, merge, release. Use for execute phase, run plan.'
-version: 0.1.4
+version: 0.1.5
 maturity: beta
 runtimes:
   - claude
@@ -10,6 +10,12 @@ runtimes:
 model: opus
 disable-model-invocation: true
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 ## Preflight
 
 Run environment validation before proceeding:

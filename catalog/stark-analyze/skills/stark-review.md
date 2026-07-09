@@ -2,7 +2,7 @@
 name: stark-review
 type: skill
 description: Single-agent PR review. Uses triage-selected PR review domains by default, or one forced agent via `--agent`.
-version: 0.1.15
+version: 0.1.16
 maturity: beta
 runtimes:
   - claude
@@ -10,6 +10,12 @@ runtimes:
 model: opus[1m]
 disable-model-invocation: false
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 Single-agent PR review path. Keep this skill thin: do preflight, capture the
 trusted config root, set up the worktree, then hand off to the TS dispatcher
 (`tools/stark_review.ts`). All review logic — domain selection, agent dispatch,
