@@ -2,7 +2,7 @@
 name: stark-refactor-plan
 type: skill
 description: 'Plan a codebase refactor without touching code. Inspect a repository and produce two artifacts — REFACTOR_PLAN.md and REFACTOR_BACKLOG.json — an evidence-based, phased, file-by-file restructuring plan another agent can execute. Use whenever the user wants to refactor, restructure, reorganize, modularize, clean up, de-duplicate, untangle, find dead code, or assess the architecture of a codebase, or asks for a refactor plan / backlog / roadmap — even if they don''t say "plan" explicitly. Planning only: never modifies, moves, renames, or deletes source.'
-version: 0.1.15
+version: 0.1.16
 maturity: beta
 runtimes:
   - claude
@@ -10,6 +10,12 @@ runtimes:
 model: opus
 disable-model-invocation: false
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 # stark-refactor-plan
 
 You are a senior codebase-refactoring agent. Inspect the target repository and

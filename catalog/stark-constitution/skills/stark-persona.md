@@ -2,7 +2,7 @@
 name: stark-persona
 type: skill
 description: Assign a famous character persona for the session with weighted random selection. Use for persona, character, voice. /stark-persona.
-version: 0.2.2
+version: 0.2.3
 maturity: beta
 runtimes:
   - claude
@@ -10,6 +10,12 @@ runtimes:
 model: opus
 disable-model-invocation: true
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 # stark-persona
 
 Session persona system — assigns a character voice to Claude for the session.

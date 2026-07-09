@@ -2,7 +2,7 @@
 name: stark-spec-to-plan
 type: skill
 description: Convert spec docs into phased implementation plans via paired lead/wing agents. Lead drafts, wing reviews, fix-loop until approved. Use for plan from spec.
-version: 0.1.5
+version: 0.1.6
 maturity: beta
 runtimes:
   - claude
@@ -10,6 +10,12 @@ runtimes:
 model: opus
 disable-model-invocation: true
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 ## Preflight
 
 Run environment validation before proceeding:

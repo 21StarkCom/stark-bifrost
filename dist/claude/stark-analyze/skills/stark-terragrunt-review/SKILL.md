@@ -4,6 +4,12 @@ description: Multi-agent code review of Terragrunt orchestration — terragrunt.
 disable-model-invocation: false
 model: opus
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 # stark-terragrunt-review
 
 Multi-agent Terragrunt reviewer for the **orchestration layer**. Keep this skill

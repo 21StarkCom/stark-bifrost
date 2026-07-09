@@ -2,7 +2,7 @@
 name: stark-ssot
 type: skill
 description: 'Use when consolidating or reviewing a single source of truth — duplicated logic, a constant/model-id/URL/timeout copied into a second place, a parser or regex reimplemented, a local policy branch that belongs in a registry, a fallback default wired at a call site, or a value re-derived in the UI. Also on requests to centralize, deduplicate, unify, or "why is this implemented manually / in two places". Symptoms in a diff: a hardcoded model id or GCP project, `~/.claude/code-review/...` typed out, a hand-rolled token→USD cost, a re-pasted dispatch/env helper, a duplicated `>=`/threshold check. Do NOT use for code that only looks similar but answers a different question.'
-version: 0.1.15
+version: 0.1.16
 maturity: beta
 runtimes:
   - claude
@@ -10,6 +10,12 @@ runtimes:
 model: opus[1m]
 disable-model-invocation: false
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 # stark-ssot — one owner per responsibility
 
 > **Skill vs. review domain.** SSOT is *also* an automated detection lens: the

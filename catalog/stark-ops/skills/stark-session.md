@@ -2,7 +2,7 @@
 name: stark-session
 type: skill
 description: Session start (context, git state, briefing) and end (tests, merge, push). Use for session start/end, catch me up.
-version: 0.1.4
+version: 0.1.5
 maturity: beta
 runtimes:
   - claude
@@ -10,6 +10,12 @@ runtimes:
 model: opus
 disable-model-invocation: true
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 ## Preflight
 
 Run [standard preflight](../../standards/preflight.md) with `--workflow stark-session`.

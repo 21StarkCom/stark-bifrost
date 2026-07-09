@@ -2,7 +2,7 @@
 name: stark-terragrunt-review
 type: skill
 description: Multi-agent code review of Terragrunt orchestration — terragrunt.hcl, root.hcl, terragrunt.stack.hcl, units, includes, dependency/generate/remote_state blocks, the DRY values pattern, multi-account/multi-env live repos — for dependency correctness, state isolation, mock-output safety, and HCL pitfalls. Runs across one or more configurable LLMs (claude/codex/gemini), each as its own subagent, then merges + cross-validates findings. Use whenever the user wants to review, audit, or sanity-check a Terragrunt repo/catalog/live tree, or asks about dependency ordering / mock outputs / state keys / include hierarchy. Review-only; defers resource/module HCL to stark-terraform-review.
-version: 0.1.15
+version: 0.1.16
 maturity: beta
 runtimes:
   - claude
@@ -10,6 +10,12 @@ runtimes:
 model: opus
 disable-model-invocation: false
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 # stark-terragrunt-review
 
 Multi-agent Terragrunt reviewer for the **orchestration layer**. Keep this skill

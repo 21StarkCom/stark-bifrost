@@ -4,6 +4,12 @@ description: 'Cut a release: changelog review (auto-generating from git log if [
 disable-model-invocation: true
 model: sonnet
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 # Release Management
 
 Reviews accumulated changes in CHANGELOG.md, bumps the version, creates a git tag,

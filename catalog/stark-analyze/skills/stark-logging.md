@@ -2,7 +2,7 @@
 name: stark-logging
 type: skill
 description: 'Use when adding, changing, or reviewing application logging — instrumenting a service/CLI/connector, choosing log levels (DEBUG→FATAL), writing structured logs, or judging whether log lines in a diff are actually useful. Symptoms: fmt.Sprintf/printf into a message, everything at INFO, log-and-return, no correlation id, secrets in logs, per-item spam in loops, logs nobody can grep.'
-version: 0.1.15
+version: 0.1.16
 maturity: beta
 runtimes:
   - claude
@@ -10,6 +10,12 @@ runtimes:
 model: opus[1m]
 disable-model-invocation: false
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 # stark-logging — writing logs a reviewer calls good
 
 ## Overview

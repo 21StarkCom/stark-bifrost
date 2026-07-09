@@ -4,6 +4,12 @@ description: 'Autonomous lead/wing implementation: lead subagent implements, win
 disable-model-invocation: true
 model: opus
 ---
+## Help
+
+If `$ARGUMENTS` requests help (a standalone `--help`, `-h`, or `help` token),
+follow [standard help](../../standards/help.md): print this skill's purpose,
+usage, and arguments, then stop — do not run preflight or any phase.
+
 ## Preflight
 
 Run environment validation before proceeding:

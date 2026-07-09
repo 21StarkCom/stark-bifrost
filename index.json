@@ -22,7 +22,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "runtimes": [
         "claude",
         "codex"
@@ -31,7 +31,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:814f31ce17569555b12d772c25e57859037d4acae54db0cffc79581dd49eff69"
+      "digest": "sha256:67dec7605c72d6665f90bfbd69d3542d6f84b7962e2212f2c2882ab07068bcca"
     },
     {
       "name": "stark-red-team-plan",
@@ -47,7 +47,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "runtimes": [
         "claude",
         "codex"
@@ -56,7 +56,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:8590e3d99ec60d5acac42f7e43cfecaae1b5baba4e923b06c3908c67bdf654a7"
+      "digest": "sha256:b425d9652890ff3705db69edfde176b70b3bd3104cf5de1b512e60c1878edaab"
     },
     {
       "name": "stark-red-team-spec",
@@ -72,7 +72,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "runtimes": [
         "claude",
         "codex"
@@ -81,7 +81,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:7a40edf66f8a5e79799661a565bb4bc425ee8239428f1048d6cc651e7ea1b731"
+      "digest": "sha256:68988b5d5dc1d53a8da45c2ce9e625641754af092b0ce81376d30d74efef3e1d"
     },
     {
       "name": "stark-refactor-plan",
@@ -97,7 +97,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "runtimes": [
         "claude",
         "codex"
@@ -106,7 +106,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:7ef6ea66729849cdf47889f614841572377a2b7e8ff1a51b40ce8dcef05e14e2"
+      "digest": "sha256:f93c6221ec6f9a927045e1ef3a4c7a2422c0edaa31dcfb33f4144005aed961e1"
     },
     {
       "name": "stark-review-improvement",
@@ -122,7 +122,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "runtimes": [
         "claude",
         "codex"
@@ -131,7 +131,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:629015a3e6d59c2dddb87720dd6d12ef741b87316c4ef0953460faa7fdd90720"
+      "digest": "sha256:9302f1dfb40d2eed6fcd84c288d986ce6d650673bc9669f9acd0222e34dd46de"
     },
     {
       "name": "stark-review-plan",
@@ -147,7 +147,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "runtimes": [
         "claude",
         "codex"
@@ -156,7 +156,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:727234a5627d673b58fb0c8ea6513eaeb87fbc6d9fc1675aee320c17a9e99988"
+      "digest": "sha256:1ceb47890732bd1dad5238cf56d0104f18a1747078abbefb1d937cd5a27be71a"
     },
     {
       "name": "stark-review-spec-improvement",
@@ -172,7 +172,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "runtimes": [
         "claude",
         "codex"
@@ -181,7 +181,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:417d763d15c3cb70114c7a176aac46ec0c72c235f27181d2accbaded667fae29"
+      "digest": "sha256:6dd9fbd3f09cc84733697cb518bfcf3026e576db942b40def29b025192db543e"
     },
     {
       "name": "stark-review-spec",
@@ -197,7 +197,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "runtimes": [
         "claude",
         "codex"
@@ -206,7 +206,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:6bfdda40a3cf9f95baeab197d34b3d09b8a1e95f16528999a7171694ad1066a1"
+      "digest": "sha256:3d7749d103c270819d2f7332c658380dee0ba919827154e1c6768346346ac4d4"
     },
     {
       "name": "stark-review",
@@ -222,7 +222,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "runtimes": [
         "claude",
         "codex"
@@ -231,7 +231,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:ce7c4379630eb257fc36593ce817d71d367778265368462a19af9669ea37172b"
+      "digest": "sha256:140ea098832993b2803630fad8d39aae2b4d8db696bbae7888ad7f4a682cd8be"
     },
     {
       "name": "stark-ssot",
@@ -247,7 +247,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "runtimes": [
         "claude",
         "codex"
@@ -256,7 +256,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:484f6052b64f1761ce3d29b74c04142b9144025d710144d6734cd82fbaead69e"
+      "digest": "sha256:2a86ad138999cc6e39b634a8913d8e7f509b9939d69986ac070907ea5ad1a9db"
     },
     {
       "name": "stark-terraform-review",
@@ -272,7 +272,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "runtimes": [
         "claude",
         "codex"
@@ -281,7 +281,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:ae35d27caf28e01494453a1976bdca023073f09e43955f2017f093cb3b15e6dd"
+      "digest": "sha256:bb505eb5a8700c60d04aee617f651e936ba699eacc2ed2f8935f6b348d966f85"
     },
     {
       "name": "stark-terragrunt-review",
@@ -297,7 +297,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "runtimes": [
         "claude",
         "codex"
@@ -306,7 +306,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:1b1fea8bb1c6b301b95be088eee45d2e5a91bd256f41f54cfeaaf80c2fc2510b"
+      "digest": "sha256:93e95aeec3aff0a338cf9ed6d188827d08c6279dffff893ed29ed068779b193c"
     },
     {
       "name": "stark-adr",
@@ -322,7 +322,7 @@
       ],
       "category": "setup",
       "maturity": "beta",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "runtimes": [
         "claude",
         "codex"
@@ -331,7 +331,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:668f5373b8c78066d575814daee4525519b967e086856b5471e2abd9ca3565eb"
+      "digest": "sha256:8474e2199d75ecb61f67e7a493c5fb0f792fdc950debb1d0c3499a1aaa3981c3"
     },
     {
       "name": "stark-init-docs",
@@ -347,7 +347,7 @@
       ],
       "category": "setup",
       "maturity": "beta",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "runtimes": [
         "claude",
         "codex"
@@ -356,7 +356,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:4d17f22207a7409d771b7c79c5b67029f2ad817ca1186d92658147ada0bde177"
+      "digest": "sha256:6b0d44d998d3a3a34defa710c04bdc0b6ac937512c44f0ab280c64bbe3031213"
     },
     {
       "name": "stark-persona",
@@ -372,7 +372,7 @@
       ],
       "category": "setup",
       "maturity": "beta",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "runtimes": [
         "claude",
         "codex"
@@ -381,7 +381,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:5fda76a00fa6ec24d853f0d00dbde0ae5d92e2d734f04f00beeb041728382bdd"
+      "digest": "sha256:fe70a76d7c7bf62bd53b6295618cc8f8c5f33a6dd227a47328fbdae749d030ae"
     },
     {
       "name": "cleanup",
@@ -496,7 +496,7 @@
       ],
       "category": "implementation",
       "maturity": "beta",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "runtimes": [
         "claude",
         "codex"
@@ -505,7 +505,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:51dd1d7df3d8b68671a61ca23548ff408b1a80027a8dce9de3488a7313dedfcc"
+      "digest": "sha256:9fcc73fcd1c6fa0810157ed2a3c6a1a5c2a5f132f3304891a594496470f4cbd4"
     },
     {
       "name": "stark-phase-execute",
@@ -520,7 +520,7 @@
       ],
       "category": "implementation",
       "maturity": "beta",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "runtimes": [
         "claude",
         "codex"
@@ -529,7 +529,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:0a581bb1d32c1ac8b56e8a98dab5c5e7a125d3e7619382b676443612f85140c9"
+      "digest": "sha256:ba4c4c602320e6d1633c71c2cbc1e81f9614d8f3ec8c796c8af026cfb819fe88"
     },
     {
       "name": "stark-gh-user",
@@ -545,7 +545,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "runtimes": [
         "claude",
         "codex"
@@ -554,7 +554,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:4f26a6a890460cef6458112c1354c6ed83873e6044623c43c29762e4a62b52a8"
+      "digest": "sha256:1f6c0ae22034f8073877f27c7dcf510191c53bdf214fe3e97ca11de06183a0e6"
     },
     {
       "name": "stark-handover",
@@ -570,7 +570,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "runtimes": [
         "claude",
         "codex"
@@ -579,7 +579,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:6ba6326391585d0a30244a40583e96d0f6274d9631a4729f6b95386d43c6f30e"
+      "digest": "sha256:c9ef03b0316f3752b054bad77c15891da6f00a3c33f55fa0f426c02ccc7f2ad5"
     },
     {
       "name": "stark-housekeeping",
@@ -595,7 +595,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "runtimes": [
         "claude",
         "codex"
@@ -604,7 +604,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:d632c39c03580c94b868264c4ca0e6f2a4d1af74e6854c45c2d0b50b077e39fe"
+      "digest": "sha256:45a3f43949c4e2c2e5e388a6e52ba8cc160183063eaa74138d61e0b33a5c14df"
     },
     {
       "name": "stark-release",
@@ -620,7 +620,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "runtimes": [
         "claude",
         "codex"
@@ -629,7 +629,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:b533f50ae603dd8507188e8d91f03f8a904c70dbd9704708cfe412b17529bbcf"
+      "digest": "sha256:8d82812554ebd2eda0e91805f42c47eadad4e0539d4e66575af5f7ce31be6c61"
     },
     {
       "name": "stark-session",
@@ -645,7 +645,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "runtimes": [
         "claude",
         "codex"
@@ -654,7 +654,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:ff8616798133314b6136fc79630e30f96f9a0c391d2a204ddf847e2060984a74"
+      "digest": "sha256:d2d859166d7347dd02f6a7b6878892c9028a0ecc0f2496d50d5751300b7a78cc"
     },
     {
       "name": "stark-plan-to-tasks",
@@ -669,7 +669,7 @@
       ],
       "category": "planning",
       "maturity": "beta",
-      "version": "0.1.5",
+      "version": "0.1.6",
       "runtimes": [
         "claude",
         "codex"
@@ -678,7 +678,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:cc0ac159a31083aa6abef4329463aabffc3852757775690c0e4ab01fd4de70d7"
+      "digest": "sha256:032263d9a9c3db7f68d0e84871e0b4b6c7700777c08bc4d06606fb944f986c00"
     },
     {
       "name": "stark-spec-to-plan",
@@ -693,7 +693,7 @@
       ],
       "category": "planning",
       "maturity": "beta",
-      "version": "0.1.5",
+      "version": "0.1.6",
       "runtimes": [
         "claude",
         "codex"
@@ -702,7 +702,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:b5696ab07563d71716e7e1cb10e53b0fcee5023796172f5e37ba88e0dc63330a"
+      "digest": "sha256:ba462ad6e2f3653e185f35abc9916b3c92e8fe4400476d5ec6f7c0e64c52ad06"
     }
   ]
 }
