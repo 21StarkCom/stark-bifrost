@@ -3,9 +3,17 @@
 > **Live.** Host = `marketplace.21stark.com`, served on Cloud Run behind
 > the `ev-infra-group` shared platform LB. Infra primitives
 > (SAs/IAM/GAR/NEG/host-rule/DNS) live in Terraform
-> (`ev-infra-group/infra/stark-marketplace.tf`) — no ad-hoc `gcloud`. The Cloud
-> Run service itself is deployed by this repo's CI via WIF
-> (`.github/workflows/web-deploy.yml`).
+> (`ev-infra-group/infra/stark-marketplace.tf`) — no ad-hoc `gcloud`.
+>
+> **Deploy is manual/local (cost control).** `web-deploy.yml` is **disabled**
+> (`gh workflow disable web-deploy`) — it rebuilt a Docker image + redeployed
+> Cloud Run on every push to main, which was the only real dollar cost on this
+> otherwise-free public repo (GAR image storage + Cloud Run churn). Publish site
+> changes on-demand with **`docs/scripts/deploy-web.sh`** (local gcloud/docker
+> ADC, not WIF). Re-enable CI deploys any time with `gh workflow enable
+> web-deploy`. The **native CC marketplace reads the public repo directly and
+> does not need this site** — so a stale-but-up site costs nothing (Cloud Run
+> scales to zero).
 
 ## Pattern: public static origin behind the platform LB
 
@@ -87,5 +95,8 @@ runtime SA are fixed in the workflow `env:` block.
 4. `marketplace_lb_enabled=true` was applied in `ev-infra-group`, wiring DNS/LB/alerts.
 5. `https://marketplace.21stark.com/` returns `HTTP/2 200`; `/healthz` returns `ok`.
 
-Future deploys are push-to-main through `.github/workflows/web-deploy.yml`; no
-manual `gcloud run deploy` is needed for normal updates.
+Future deploys are **manual/local** via `docs/scripts/deploy-web.sh` (the
+`web-deploy.yml` workflow is disabled for cost — see the note at the top of this
+doc). Run the script only when you want to publish site changes; prune old GAR
+images afterwards to keep storage near-zero. To restore push-to-main CI deploys,
+`gh workflow enable web-deploy`.
