@@ -3,7 +3,7 @@ package validate
 import (
 	"regexp"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 var slugRe = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,63}$`)

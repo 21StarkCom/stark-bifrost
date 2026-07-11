@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/load"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/validate"
+	"github.com/21StarkCom/bifrost/engine/internal/load"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/validate"
 )
 
 // Schema-valid source fields (version/tags/category/maturity/summary/runtimes) must be CARRIED,

@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/importer"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/load"
+	"github.com/21StarkCom/bifrost/engine/internal/importer"
+	"github.com/21StarkCom/bifrost/engine/internal/load"
 	"github.com/spf13/cobra"
 )
 

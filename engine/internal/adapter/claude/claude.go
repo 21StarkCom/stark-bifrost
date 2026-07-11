@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/canonjson"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/merge"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/adapter"
+	"github.com/21StarkCom/bifrost/engine/internal/canonjson"
+	"github.com/21StarkCom/bifrost/engine/internal/merge"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 	"gopkg.in/yaml.v3"
 )
 

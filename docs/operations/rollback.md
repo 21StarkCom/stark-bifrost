@@ -58,7 +58,7 @@ Cosign keyless signatures have **no native revocation**. The transparency log is
 
 The cosign signer identity is pinned exactly in `engine/internal/provenance/verify.go`:
 ```
-https://github.com/21StarkCom/stark-bifrost/.github/workflows/sign-manifest.yml@refs/heads/main
+https://github.com/21StarkCom/bifrost/.github/workflows/sign-manifest.yml@refs/heads/main
 ```
 A signature from any other workflow, ref, or repo fails `stark verify-manifest`.
 

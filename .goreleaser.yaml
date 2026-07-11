@@ -65,7 +65,7 @@ changelog:
 release:
   github:
     owner: 21StarkCom
-    name: stark-bifrost
+    name: bifrost
   draft: false
   prerelease: auto
   mode: append   # APPEND binaries to the existing release (signed manifest already attached)

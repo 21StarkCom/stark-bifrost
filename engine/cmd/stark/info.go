@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/indexio"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/installplan"
+	"github.com/21StarkCom/bifrost/engine/internal/indexio"
+	"github.com/21StarkCom/bifrost/engine/internal/installplan"
 	"github.com/spf13/cobra"
 )
 

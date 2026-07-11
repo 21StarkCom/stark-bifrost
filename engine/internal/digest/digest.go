@@ -11,8 +11,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/canonjson"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/canonjson"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 // Source returns the version-bump-gate digest. Only identity, type-specific

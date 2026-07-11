@@ -6,7 +6,7 @@ tags: [github, pr, workflow]
 owner: { name: 21 Stark AI, email: engineering@21stark.com }
 maturity: beta
 runtimes: [claude, codex, gemini]
-homepage: https://github.com/21StarkCom/stark-bifrost/tree/main/catalog/stark-gh
+homepage: https://github.com/21StarkCom/bifrost/tree/main/catalog/stark-gh
 # Membership manifest consumed by the generator (`stark sync`): commands pulled
 # from stark-skills plugins/stark-gh.
 commands:

@@ -3,7 +3,7 @@ package validate
 import (
 	"testing"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/load"
+	"github.com/21StarkCom/bifrost/engine/internal/load"
 )
 
 func TestSeedCatalogIsValid(t *testing.T) {

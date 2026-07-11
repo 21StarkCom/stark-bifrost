@@ -1,4 +1,4 @@
-module github.com/21StarkCom/stark-bifrost/engine
+module github.com/21StarkCom/bifrost/engine
 
 go 1.24.0
 

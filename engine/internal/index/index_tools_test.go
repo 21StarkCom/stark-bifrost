@@ -3,7 +3,7 @@ package index
 import (
 	"testing"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 // Spec §7.4 requires agent.tools to be "surfaced in the index"; the surfacing home is the CC-3

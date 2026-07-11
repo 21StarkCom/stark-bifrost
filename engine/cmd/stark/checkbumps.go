@@ -7,10 +7,10 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/bumps"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/digest"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/index"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/load"
+	"github.com/21StarkCom/bifrost/engine/internal/bumps"
+	"github.com/21StarkCom/bifrost/engine/internal/digest"
+	"github.com/21StarkCom/bifrost/engine/internal/index"
+	"github.com/21StarkCom/bifrost/engine/internal/load"
 	"github.com/spf13/cobra"
 )
 

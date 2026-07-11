@@ -3,7 +3,7 @@ package validate
 import (
 	"testing"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 func TestOpenAICompatibilityRequiresCodexForClaudeSkills(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/importer"
+	"github.com/21StarkCom/bifrost/engine/internal/importer"
 	"github.com/spf13/cobra"
 )
 

@@ -4,7 +4,7 @@
 // into prose, or block.
 package fieldmap
 
-import "github.com/21StarkCom/stark-bifrost/engine/internal/model"
+import "github.com/21StarkCom/bifrost/engine/internal/model"
 
 type Action string
 

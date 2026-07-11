@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/load"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/load"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 func TestBuildTwiceIdentical(t *testing.T) {

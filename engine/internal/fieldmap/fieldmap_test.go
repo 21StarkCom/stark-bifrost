@@ -3,7 +3,7 @@ package fieldmap
 import (
 	"testing"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 func TestActionsMatchSpec62(t *testing.T) {

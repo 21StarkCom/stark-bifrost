@@ -6,7 +6,7 @@ package adapter
 import (
 	"sort"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 // OutputFile is one generated file. Path uses `/` separators and is relative to

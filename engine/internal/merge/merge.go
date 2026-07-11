@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/fence"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/fence"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 // deepMerge returns base with patch applied. Both inputs are treated as

@@ -5,7 +5,7 @@ describe('installSnippets', () => {
   it('claude native uses /plugin marketplace add + /plugin install', () => {
     const s = installSnippets({ bundle: 'stark-review', runtime: 'claude', support: 'native' });
     expect(s.surface).toBe('claude-code');
-    expect(s.commands.join('\n')).toContain('/plugin marketplace add 21StarkCom/stark-bifrost');
+    expect(s.commands.join('\n')).toContain('/plugin marketplace add 21StarkCom/bifrost');
     expect(s.commands.join('\n')).toContain('/plugin install stark-review');
   });
 

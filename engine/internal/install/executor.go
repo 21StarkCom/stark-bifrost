@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/installplan"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/installplan"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 // Options controls executor behavior.

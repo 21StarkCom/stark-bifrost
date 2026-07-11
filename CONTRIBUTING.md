@@ -6,7 +6,7 @@ This repo distributes code that runs inside developer agents (and, for `mcp/` en
 
 - Go 1.24 (pinned via `engine/go.mod`)
 - Node 20+ (for `web/`)
-- Repo access to `21StarkCom/stark-bifrost`
+- Repo access to `21StarkCom/bifrost`
 
 ## The standard loop
 
