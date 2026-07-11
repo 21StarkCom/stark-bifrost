@@ -322,7 +322,7 @@
       ],
       "category": "setup",
       "maturity": "beta",
-      "version": "0.2.4",
+      "version": "0.2.6",
       "runtimes": [
         "claude",
         "codex"
@@ -347,7 +347,7 @@
       ],
       "category": "setup",
       "maturity": "beta",
-      "version": "0.2.5",
+      "version": "0.2.6",
       "runtimes": [
         "claude",
         "codex"
@@ -372,7 +372,7 @@
       ],
       "category": "setup",
       "maturity": "beta",
-      "version": "0.2.4",
+      "version": "0.2.6",
       "runtimes": [
         "claude",
         "codex"
