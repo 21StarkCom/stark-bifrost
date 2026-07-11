@@ -41,11 +41,14 @@ run bash -c 'cd web && npm ci && npm run lint && npm run typecheck && npm test &
 echo "==> Staging index.json + bundles/ into web/dist (atomic content-hashed unit)"
 run bash -c 'mkdir -p web/dist/bundles && cp index.json web/dist/index.json && (cp bundles/*.json web/dist/bundles/ 2>/dev/null || true)'
 
-echo "==> Building + pushing image ${IMAGE}:${SHA}"
+echo "==> Building + pushing image ${IMAGE}:${SHA} (linux/amd64 for Cloud Run)"
 run gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
-run docker build -t "${IMAGE}:${SHA}" -t "${IMAGE}:latest" .
-run docker push "${IMAGE}:${SHA}"
-run docker push "${IMAGE}:latest"
+# Cloud Run runs linux/amd64. On an arm64 Mac a plain `docker build` produces an
+# arm64 image that fails to start with "exec format error", so cross-build the
+# amd64 image with buildx (build + push in one step). Requires the buildx plugin
+# (`brew install docker-buildx` + symlink into ~/.docker/cli-plugins).
+run docker buildx build --platform linux/amd64 \
+  -t "${IMAGE}:${SHA}" -t "${IMAGE}:latest" --push .
 
 echo "==> Deploying Cloud Run ${CR_SERVICE} (behind platform LB)"
 run gcloud run deploy "${CR_SERVICE}" \
