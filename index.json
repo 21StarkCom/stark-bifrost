@@ -22,7 +22,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "runtimes": [
         "claude",
         "codex"
@@ -47,7 +47,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "runtimes": [
         "claude",
         "codex"
@@ -72,7 +72,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "runtimes": [
         "claude",
         "codex"
@@ -97,7 +97,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "runtimes": [
         "claude",
         "codex"
@@ -122,7 +122,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "runtimes": [
         "claude",
         "codex"
@@ -137,7 +137,7 @@
       "name": "stark-review-plan",
       "type": "skill",
       "bundle": "stark-analyze",
-      "description": "Multi-domain execution plan review with lead/wing fix loop. Codex (gpt-5.5, xhigh reasoning) reviews 5 adversarial domains in parallel; Claude (opus-4-8) wing fixes findings. Use for review plan, audit deployment plan.",
+      "description": "Multi-domain execution plan review with lead/wing fix loop. Codex (gpt-5.6-sol, xhigh reasoning) reviews 5 adversarial domains in parallel; Claude (opus-4-8) wing fixes findings. Use for review plan, audit deployment plan.",
       "tags": [
         "review",
         "red-team",
@@ -147,7 +147,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "runtimes": [
         "claude",
         "codex"
@@ -156,7 +156,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:1ceb47890732bd1dad5238cf56d0104f18a1747078abbefb1d937cd5a27be71a"
+      "digest": "sha256:a193c7e430c18cb402df7ffcc7a166204c2d88411772a67f57c417d5260a2bee"
     },
     {
       "name": "stark-review-spec-improvement",
@@ -172,7 +172,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "runtimes": [
         "claude",
         "codex"
@@ -187,7 +187,7 @@
       "name": "stark-review-spec",
       "type": "skill",
       "bundle": "stark-analyze",
-      "description": "Multi-domain spec review with lead/wing fix loop. Codex (gpt-5.5, xhigh reasoning) reviews 9 domains in parallel; Claude (opus-4-8) wing fixes findings. Use for review spec, review architecture.",
+      "description": "Multi-domain spec review with lead/wing fix loop. Codex (gpt-5.6-sol, xhigh reasoning) reviews 9 domains in parallel; Claude (opus-4-8) wing fixes findings. Use for review spec, review architecture.",
       "tags": [
         "review",
         "red-team",
@@ -197,7 +197,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "runtimes": [
         "claude",
         "codex"
@@ -206,7 +206,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:3d7749d103c270819d2f7332c658380dee0ba919827154e1c6768346346ac4d4"
+      "digest": "sha256:01ac066c6d8e7aa902e2743e25969b7369f6b9dddc200b4664595af6725ee42e"
     },
     {
       "name": "stark-review",
@@ -222,7 +222,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "runtimes": [
         "claude",
         "codex"
@@ -247,7 +247,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "runtimes": [
         "claude",
         "codex"
@@ -256,7 +256,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:2a86ad138999cc6e39b634a8913d8e7f509b9939d69986ac070907ea5ad1a9db"
+      "digest": "sha256:cce97cd6f28006255ce9df830393af06ffdce5c0028295ac4f1941abf1f5087c"
     },
     {
       "name": "stark-terraform-review",
@@ -272,7 +272,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "runtimes": [
         "claude",
         "codex"
@@ -297,7 +297,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "runtimes": [
         "claude",
         "codex"
@@ -395,7 +395,7 @@
       ],
       "category": "productivity",
       "maturity": "beta",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "runtimes": [
         "claude",
         "codex",
@@ -420,7 +420,7 @@
       ],
       "category": "productivity",
       "maturity": "beta",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "runtimes": [
         "claude",
         "codex",
@@ -445,7 +445,7 @@
       ],
       "category": "productivity",
       "maturity": "beta",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "runtimes": [
         "claude",
         "codex",
@@ -456,7 +456,7 @@
         "codex": "native",
         "gemini": "native"
       },
-      "digest": "sha256:eecdce894f73757f3e9e741b785c818a43a2620e9c39bef1cf7fffbccd5e279c"
+      "digest": "sha256:7e64b616174999fa23b1fd7f51a89c9469b4c984847ff65adea337cb0d214fb8"
     },
     {
       "name": "gh",

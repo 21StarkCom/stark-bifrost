@@ -2,7 +2,7 @@
 name: pr-merge
 type: command
 description: Rebase a PR, draft squash-commit prose + CHANGELOG bullet via Codex, force-push, and squash-merge once CI is green.
-version: 0.1.3
+version: 0.1.4
 maturity: beta
 runtimes:
   - claude

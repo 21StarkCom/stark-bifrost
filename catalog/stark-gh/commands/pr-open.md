@@ -2,7 +2,7 @@
 name: pr-open
 type: command
 description: Open or update a PR with Codex-drafted prose, stage-all commit (default), push, and CI watcher.
-version: 0.1.3
+version: 0.1.4
 maturity: beta
 runtimes:
   - claude
@@ -54,7 +54,7 @@ node --experimental-strip-types "$TOOLS/gh_pr_open_draft.ts" --plan-file "$PLAN_
 ```
 
 The draft tool reads `$PLAN_FILE`, internally subprocess-calls `codex exec`
-(default `gpt-5.5`, reasoning effort `medium`, configurable via
+(default `gpt-5.6-sol`, reasoning effort `medium`, configurable via
 `plugins/stark-gh/config.json`), validates model output, writes prose tempfiles,
 and atomic-updates the plan-file.
 
