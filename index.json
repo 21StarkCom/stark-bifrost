@@ -22,7 +22,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.17",
+      "version": "0.1.18",
       "runtimes": [
         "claude",
         "codex"
@@ -47,7 +47,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.17",
+      "version": "0.1.18",
       "runtimes": [
         "claude",
         "codex"
@@ -72,7 +72,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.17",
+      "version": "0.1.18",
       "runtimes": [
         "claude",
         "codex"
@@ -97,7 +97,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.17",
+      "version": "0.1.18",
       "runtimes": [
         "claude",
         "codex"
@@ -122,7 +122,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.17",
+      "version": "0.1.18",
       "runtimes": [
         "claude",
         "codex"
@@ -131,7 +131,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:9302f1dfb40d2eed6fcd84c288d986ce6d650673bc9669f9acd0222e34dd46de"
+      "digest": "sha256:db4b8e4b4f4eb342c0c447402e515a7d738d7b2512d774f0f1b51b409e9ccb0b"
     },
     {
       "name": "stark-review-plan",
@@ -147,7 +147,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.17",
+      "version": "0.1.18",
       "runtimes": [
         "claude",
         "codex"
@@ -172,7 +172,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.17",
+      "version": "0.1.18",
       "runtimes": [
         "claude",
         "codex"
@@ -197,7 +197,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.17",
+      "version": "0.1.18",
       "runtimes": [
         "claude",
         "codex"
@@ -222,7 +222,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.17",
+      "version": "0.1.18",
       "runtimes": [
         "claude",
         "codex"
@@ -247,7 +247,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.17",
+      "version": "0.1.18",
       "runtimes": [
         "claude",
         "codex"
@@ -272,7 +272,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.17",
+      "version": "0.1.18",
       "runtimes": [
         "claude",
         "codex"
@@ -297,7 +297,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.17",
+      "version": "0.1.18",
       "runtimes": [
         "claude",
         "codex"
@@ -322,7 +322,7 @@
       ],
       "category": "setup",
       "maturity": "beta",
-      "version": "0.2.3",
+      "version": "0.2.4",
       "runtimes": [
         "claude",
         "codex"
@@ -347,7 +347,7 @@
       ],
       "category": "setup",
       "maturity": "beta",
-      "version": "0.2.3",
+      "version": "0.2.4",
       "runtimes": [
         "claude",
         "codex"
@@ -356,7 +356,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:6b0d44d998d3a3a34defa710c04bdc0b6ac937512c44f0ab280c64bbe3031213"
+      "digest": "sha256:236e939c3aaaa2fa0506d204a6b33668cb0faade87215a98b68a7ba72214f2ae"
     },
     {
       "name": "stark-persona",
@@ -372,7 +372,7 @@
       ],
       "category": "setup",
       "maturity": "beta",
-      "version": "0.2.3",
+      "version": "0.2.4",
       "runtimes": [
         "claude",
         "codex"

@@ -9,7 +9,7 @@
       "name": "stark-analyze",
       "source": "./dist/claude/stark-analyze",
       "description": "Multi-domain review and adversarial red-team of designs, execution plans, and PRs, multi-agent Terraform/Terragrunt (IaC) review, application-logging authoring/review guidance, plus review-prompt improvement from assessment feedback. Maps to spec-kit's analyze phase.",
-      "version": "0.1.17",
+      "version": "0.1.18",
       "author": {
         "name": "21 Stark AI",
         "email": "engineering@21stark.com"
@@ -28,7 +28,7 @@
       "name": "stark-constitution",
       "source": "./dist/claude/stark-constitution",
       "description": "Project setup, decision records, and session priming — scaffold a dev-docs/standards structure (template/backfill/upgrade modes), record architecture decisions (ADRs) under docs/adr/, and assign a session persona. Maps to spec-kit's constitution phase.",
-      "version": "0.2.3",
+      "version": "0.2.4",
       "author": {
         "name": "21 Stark AI",
         "email": "engineering@21stark.com"

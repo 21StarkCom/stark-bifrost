@@ -2,7 +2,7 @@
 name: stark-review-improvement
 type: skill
 description: Improve review prompts based on Prompt Improvement Assessment from completed reviews. Use for fix review prompts.
-version: 0.1.17
+version: 0.1.18
 maturity: beta
 runtimes:
   - claude
@@ -32,7 +32,7 @@ Closes the feedback loop on stark-skills: reads the prompt improvement assessmen
 ## Constants
 
 ```
-STARK_REPO  = ~/Code/Playground/stark-skills
+STARK_REPO  = ~/Code/21Stark/stark-skills
 PROMPTS     = $STARK_REPO/global/prompts
 TOOLS       = $STARK_REPO/tools
 CONFIG      = $STARK_REPO/global/config.json
