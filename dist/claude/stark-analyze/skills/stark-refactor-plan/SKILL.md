@@ -1,7 +1,7 @@
 ---
 name: stark-refactor-plan
 description: 'Plan a codebase refactor without touching code. Inspect a repository and produce two artifacts — REFACTOR_PLAN.md and REFACTOR_BACKLOG.json — an evidence-based, phased, file-by-file restructuring plan another agent can execute. Use whenever the user wants to refactor, restructure, reorganize, modularize, clean up, de-duplicate, untangle, find dead code, or assess the architecture of a codebase, or asks for a refactor plan / backlog / roadmap — even if they don''t say "plan" explicitly. Planning only: never modifies, moves, renames, or deletes source.'
-disable-model-invocation: false
+disable-model-invocation: true
 model: opus
 ---
 ## Help

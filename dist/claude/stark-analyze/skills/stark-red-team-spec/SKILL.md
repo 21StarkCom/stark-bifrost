@@ -53,6 +53,9 @@ Raw input: `$ARGUMENTS`
 - `--no-pr-comment` — skip **all** PR side effects: do not auto-open a PR and
   do not post the findings comment (even if a PR is already detected). The
   sidecar is still written and committed locally.
+- `--ready` (alias `--no-draft`) — when this run **opens** a PR, open it
+  ready-for-review. By default an auto-opened PR is a **draft** so the target
+  repo's draft-guarded CI stays idle until it's marked ready.
 - `--fold` — after a successful challenge, fold the proposed fix plan back into
   the spec doc by shelling out to `/stark-red-team-fold` (`red_team_fold.ts`):
   a token-less Claude decider triages each move (accept/modify/reject) and opens
@@ -258,6 +261,8 @@ non-empty when `--no-pr-comment` was passed):
 # Open a fresh PR this run? Only when none exists AND PR interaction is allowed.
 open_pr=0
 [ -z "$pr_number" ] && [ -z "$no_pr_comment" ] && open_pr=1
+# Draft-by-default: an auto-opened PR is a draft unless --ready/--no-draft was
+# passed. open_ready is non-empty when either token is present in $ARGUMENTS.
 ```
 
 #### 4.2a Ensure a working branch (never commit to the default branch)
@@ -323,8 +328,10 @@ Model: $model · Run: $run_id" \
 ```bash
 if [ "$open_pr" = 1 ]; then
   git push -u origin HEAD
+  ready_flag=()
+  [ -n "$open_ready" ] && ready_flag=(--ready)
   created=$(node --experimental-strip-types "$TOOLS/github_app.ts" --app "$RT_APP" \
-      --repo "$REPO" pr create \
+      --repo "$REPO" pr create "${ready_flag[@]}" \
       --head "$branch" \
       --base "$default_branch" \
       --title "Red-team: $(basename -- "$spec_path")" \
