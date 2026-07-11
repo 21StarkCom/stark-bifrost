@@ -8,11 +8,11 @@
 package registry
 
 import (
-	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter/claude"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter/codex"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter/gemini"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/adapter"
+	"github.com/21StarkCom/bifrost/engine/internal/adapter/claude"
+	"github.com/21StarkCom/bifrost/engine/internal/adapter/codex"
+	"github.com/21StarkCom/bifrost/engine/internal/adapter/gemini"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 // All returns every runtime target keyed by runtime (claude + codex + gemini).

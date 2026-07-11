@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter/registry"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/build"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/load"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/provenance"
+	"github.com/21StarkCom/bifrost/engine/internal/adapter/registry"
+	"github.com/21StarkCom/bifrost/engine/internal/build"
+	"github.com/21StarkCom/bifrost/engine/internal/load"
+	"github.com/21StarkCom/bifrost/engine/internal/provenance"
 	"github.com/spf13/cobra"
 )
 

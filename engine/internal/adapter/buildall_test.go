@@ -4,10 +4,10 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter/codex"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter/gemini"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/load"
+	"github.com/21StarkCom/bifrost/engine/internal/adapter"
+	"github.com/21StarkCom/bifrost/engine/internal/adapter/codex"
+	"github.com/21StarkCom/bifrost/engine/internal/adapter/gemini"
+	"github.com/21StarkCom/bifrost/engine/internal/load"
 )
 
 // emitAll runs the canonical bundle-level Render (CC-1) over every catalog bundle.

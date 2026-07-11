@@ -12,11 +12,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter/claude"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/canonjson"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/index"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/marketplace"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/adapter/claude"
+	"github.com/21StarkCom/bifrost/engine/internal/canonjson"
+	"github.com/21StarkCom/bifrost/engine/internal/index"
+	"github.com/21StarkCom/bifrost/engine/internal/marketplace"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 // toLF normalizes content to LF so the in-memory set, the on-disk write, and the
@@ -150,12 +150,12 @@ func Build(cat *model.Catalog, opts Options) (Output, error) {
 	// under dist/claude so `/plugin marketplace add` resolves it. Emitted into the
 	// generated set so the existing drift gate covers it — no separate gate.
 	// The manifest is committed at the REPO ROOT (.claude-plugin/marketplace.json):
-	// `/plugin marketplace add 21StarkCom/stark-bifrost` looks for the manifest
+	// `/plugin marketplace add 21StarkCom/bifrost` looks for the manifest
 	// at the repo root, and CC resolves each entry's relative `source` against the
 	// marketplace root (= the dir containing .claude-plugin/ = repo root), so a
 	// source of "./dist/claude/<bundle>" resolves to the committed bundle tree.
 	mani, err := marketplace.Marshal(marketplace.Generate(cat, marketplace.Options{
-		Name:     "stark-bifrost",
+		Name:     "bifrost",
 		Owner:    marketplace.Owner{Name: "21 Stark AI", Email: "engineering@21stark.com"},
 		DistRoot: "./dist/claude",
 	}))

@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/load"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/adapter"
+	"github.com/21StarkCom/bifrost/engine/internal/load"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 var update = os.Getenv("UPDATE_GOLDEN") == "1"

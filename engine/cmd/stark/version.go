@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/indexio"
+	"github.com/21StarkCom/bifrost/engine/internal/indexio"
 	"github.com/spf13/cobra"
 )
 

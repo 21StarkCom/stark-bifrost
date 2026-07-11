@@ -6,11 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/aggregate"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/indexio"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/install"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/installplan"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/aggregate"
+	"github.com/21StarkCom/bifrost/engine/internal/indexio"
+	"github.com/21StarkCom/bifrost/engine/internal/install"
+	"github.com/21StarkCom/bifrost/engine/internal/installplan"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 // The real adapter renders sentinel emulation blocks with digest-bearing markers

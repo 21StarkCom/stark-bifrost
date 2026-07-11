@@ -16,7 +16,7 @@ export interface InstallSnippet {
   readonly note?: string;
 }
 
-const MARKETPLACE = '21StarkCom/stark-bifrost';
+const MARKETPLACE = '21StarkCom/bifrost';
 
 const target = (t: InstallTarget): string =>
   t.artifact ? `${t.bundle}/${t.artifact}` : t.bundle;

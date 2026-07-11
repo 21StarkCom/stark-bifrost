@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/provenance"
+	"github.com/21StarkCom/bifrost/engine/internal/provenance"
 )
 
 func TestBuildCheckExitCodes(t *testing.T) {

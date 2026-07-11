@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/validate"
+	"github.com/21StarkCom/bifrost/engine/internal/validate"
 	"github.com/spf13/cobra"
 )
 

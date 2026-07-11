@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/load"
+	"github.com/21StarkCom/bifrost/engine/internal/load"
 )
 
 // TestPluginAssetsOverrideSharedSnapshot verifies that per-bundle plugin assets

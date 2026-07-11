@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/provenance"
+	"github.com/21StarkCom/bifrost/engine/internal/provenance"
 	"github.com/spf13/cobra"
 )
 

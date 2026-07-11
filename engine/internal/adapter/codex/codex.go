@@ -12,11 +12,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter/emulate"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/fieldmap"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/merge"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/adapter"
+	"github.com/21StarkCom/bifrost/engine/internal/adapter/emulate"
+	"github.com/21StarkCom/bifrost/engine/internal/fieldmap"
+	"github.com/21StarkCom/bifrost/engine/internal/merge"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 	"github.com/pelletier/go-toml/v2"
 	"gopkg.in/yaml.v3"
 )

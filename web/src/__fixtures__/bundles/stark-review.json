@@ -8,7 +8,7 @@
     "tags": ["pr", "review"],
     "maturity": "stable",
     "owner": "21 Stark AI",
-    "homepage": "https://github.com/21StarkCom/stark-bifrost/tree/main/catalog/stark-review"
+    "homepage": "https://github.com/21StarkCom/bifrost/tree/main/catalog/stark-review"
   },
   "artifacts": [
     {

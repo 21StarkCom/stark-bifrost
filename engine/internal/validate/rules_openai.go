@@ -1,6 +1,6 @@
 package validate
 
-import "github.com/21StarkCom/stark-bifrost/engine/internal/model"
+import "github.com/21StarkCom/bifrost/engine/internal/model"
 
 // checkOpenAICompatibility enforces the marketplace policy that Claude-facing
 // skills and slash commands must also be installable on the OpenAI/Codex surface.

@@ -5,7 +5,7 @@ import (
 	"os"
 	"sort"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 // Action records how a path was mutated so --remove can excise precisely (spec §9.2).

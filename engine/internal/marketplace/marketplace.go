@@ -15,7 +15,7 @@ import (
 	"encoding/json"
 	"sort"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 // ManifestRelPath is the manifest's location relative to the Claude dist root

@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 // LintBodies runs an informational content scan over skill/command/agent/prompt bodies.

@@ -4,10 +4,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/21StarkCom/stark-bifrost/engine/internal/indexio"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/install"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/installplan"
-	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
+	"github.com/21StarkCom/bifrost/engine/internal/indexio"
+	"github.com/21StarkCom/bifrost/engine/internal/install"
+	"github.com/21StarkCom/bifrost/engine/internal/installplan"
+	"github.com/21StarkCom/bifrost/engine/internal/model"
 )
 
 // TestE2EPlanInstallDoctorRemove drives the same code paths the cobra commands call,
