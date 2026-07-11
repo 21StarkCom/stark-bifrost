@@ -2,7 +2,7 @@
 name: stark-ssot
 type: skill
 description: 'Use when consolidating or reviewing a single source of truth — duplicated logic, a constant/model-id/URL/timeout copied into a second place, a parser or regex reimplemented, a local policy branch that belongs in a registry, a fallback default wired at a call site, or a value re-derived in the UI. Also on requests to centralize, deduplicate, unify, or "why is this implemented manually / in two places". Symptoms in a diff: a hardcoded model id or GCP project, `~/.claude/code-review/...` typed out, a hand-rolled token→USD cost, a re-pasted dispatch/env helper, a duplicated `>=`/threshold check. Do NOT use for code that only looks similar but answers a different question.'
-version: 0.1.16
+version: 0.1.17
 maturity: beta
 runtimes:
   - claude
@@ -85,7 +85,7 @@ already centralized the things people reflexively hardcode; in another repo the
 
 | You're about to hardcode… | The owner this repo exposes | The general pattern |
 |---|---|---|
-| a **model id** (`claude-opus-4-8`, `gpt-5.5`…) | `stark_config_lib.getModelId()` / `isAgentEnabled()` | model choice → a config/registry, never a literal in a tool |
+| a **model id** (`claude-opus-4-8`, `gpt-5.6-sol`…) | `stark_config_lib.getModelId()` / `isAgentEnabled()` | model choice → a config/registry, never a literal in a tool |
 | a **GCP project / region / location** | `vertex_config_lib.resolveVertexProject()` / `resolveVertexLocation()` | environment identity → runtime resolver, never committed in source |
 | a machine-specific **path** (`~/.claude/code-review/{tools,prompts}`) | `asset_root_lib.assetRoot()/assetPromptsDir()/stateRoot()` | path roots → one resolver seam, so relocation/packaging doesn't break |
 | a **credential/App id / key location** | the `APPS` map in `github_app_lib.ts` | auth identity → one map; callers mint through it |
