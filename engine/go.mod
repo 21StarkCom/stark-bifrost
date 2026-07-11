@@ -1,4 +1,4 @@
-module github.com/21-Stark-AI/stark-marketplace/engine
+module github.com/21StarkCom/stark-bifrost/engine
 
 go 1.24.0
 

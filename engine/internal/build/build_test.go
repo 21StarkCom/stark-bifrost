@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/load"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/model"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/load"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
 )
 
 func TestBuildProducesClaudeTreeAndIndex(t *testing.T) {

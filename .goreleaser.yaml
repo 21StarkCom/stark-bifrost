@@ -64,8 +64,8 @@ changelog:
 
 release:
   github:
-    owner: 21-Stark-AI
-    name: stark-marketplace
+    owner: 21StarkCom
+    name: stark-bifrost
   draft: false
   prerelease: auto
   mode: append   # APPEND binaries to the existing release (signed manifest already attached)

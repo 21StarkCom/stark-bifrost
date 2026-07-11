@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/indexio"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/installplan"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/model"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/indexio"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/installplan"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
 )
 
 func planFor(t *testing.T, rt model.Runtime) *installplan.Plan {

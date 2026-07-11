@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/adapter/capability"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/adapter/registry"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/digest"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/merge"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/model"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter/capability"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter/registry"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/digest"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/merge"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
 )
 
 // SchemaVersion is the index schema version (spec §7.5 N-1 compat).

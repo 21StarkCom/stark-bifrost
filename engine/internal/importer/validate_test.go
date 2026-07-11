@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/load"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/validate"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/load"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/validate"
 )
 
 func TestImportedBundleValidatesClean(t *testing.T) {

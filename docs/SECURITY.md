@@ -12,7 +12,7 @@ Integrity rests on **three things together**, not on self-computed digests:
 1. **Protected, linear `main`** — no force-push, no admin bypass, no deletions.
 2. **A CI-signed build manifest** — produced on merge by `sign-manifest.yml` via
    GitHub OIDC → sigstore/cosign **keyless** (Fulcio cert + Rekor transparency log).
-   The signer identity is `repo:21-Stark-AI/stark-marketplace` on the `main` ref.
+   The signer identity is `repo:21StarkCom/stark-bifrost` on the `main` ref.
 3. **The commit SHA** — installs may pin it; the manifest binds digests to that SHA.
 
 `stark verify-manifest` checks the cosign signature, the signer identity/issuer, and
@@ -31,7 +31,7 @@ End-to-end client verify:
 ```bash
 # 1. Pull the signed bundle for a specific release (private repo → gh auth)
 gh release download v0.1.0 \
-  --repo 21-Stark-AI/stark-marketplace \
+  --repo 21StarkCom/stark-bifrost \
   --pattern 'build-manifest.json*'
 
 # 2. Verify signature (cosign keyless) + content digests against the local checkout
@@ -107,7 +107,7 @@ artifact's canonical-source digest changed without a `version` bump),
 
 ```bash
 # Require the CI status checks + linear history + code-owner review + 2 approvals, no bypass.
-gh api -X PUT repos/21-Stark-AI/stark-marketplace/branches/main/protection \
+gh api -X PUT repos/21StarkCom/stark-bifrost/branches/main/protection \
   --input - <<'JSON'
 {
   "required_status_checks": {
@@ -133,7 +133,7 @@ gh api -X PUT repos/21-Stark-AI/stark-marketplace/branches/main/protection \
 JSON
 
 # Verify it took.
-gh api repos/21-Stark-AI/stark-marketplace/branches/main/protection | \
+gh api repos/21StarkCom/stark-bifrost/branches/main/protection | \
   jq '{linear: .required_linear_history.enabled, force: .allow_force_pushes.enabled,
        admins: .enforce_admins.enabled, checks: .required_status_checks.contexts,
        codeowners: .required_pull_request_reviews.require_code_owner_reviews,

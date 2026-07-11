@@ -1,8 +1,8 @@
 package validate
 
 import (
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/adapter/capability"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/model"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter/capability"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
 )
 
 // checkCapability enforces the §6 matrix: warn on emulated targets (counted +
