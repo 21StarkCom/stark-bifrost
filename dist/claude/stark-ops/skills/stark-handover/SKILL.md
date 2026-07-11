@@ -1,7 +1,7 @@
 ---
 name: stark-handover
 description: 'Use when pausing or splitting work across sessions — before /clear, when context runs low, end of day, switching tasks — or when resuming after one. Triggers: "handover", "handoff", "save context", "save progress", "resume", "continue where we left off", "what was I doing". Persists a numbered handover chain + PROGRESS.md tracker per task; resume needs no recap.'
-disable-model-invocation: false
+disable-model-invocation: true
 ---
 ## Help
 

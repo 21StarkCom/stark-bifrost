@@ -1,7 +1,7 @@
 ---
 name: stark-review
 description: Single-agent PR review. Uses triage-selected PR review domains by default, or one forced agent via `--agent`.
-disable-model-invocation: false
+disable-model-invocation: true
 model: opus[1m]
 ---
 ## Help
