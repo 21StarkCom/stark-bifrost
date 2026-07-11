@@ -69,7 +69,7 @@ here automatically.
 
 1. Add the marketplace (private repo; you must have 21 Stark AI repo access):
    ```
-   /plugin marketplace add 21-Stark-AI/stark-marketplace
+   /plugin marketplace add 21StarkCom/stark-bifrost
    ```
    CC resolves `dist/claude/.claude-plugin/marketplace.json` and lists every
    bundle as an installable plugin.
@@ -83,7 +83,7 @@ here automatically.
 
 3. Update after a marketplace change:
    ```
-   /plugin marketplace update 21-Stark-AI/stark-marketplace
+   /plugin marketplace update 21StarkCom/stark-bifrost
    /plugin install stark-gh
    ```
 

@@ -1,6 +1,6 @@
-# stark-marketplace
+# Stark-Bifröst
 
-Canonical, multi-runtime marketplace for **stark** bundles. One source of truth (`catalog/`) renders into per-runtime trees for **Claude Code**, **Codex**, and **Gemini CLI**, plus a signed web registry served at [marketplace.21stark.com](https://marketplace.21stark.com).
+The bridge between the realms. Canonical, multi-runtime marketplace for **stark** bundles — one source of truth (`catalog/`) renders into per-runtime trees for **Claude Code**, **Codex**, and **Gemini CLI**, plus a signed web registry served at [marketplace.21stark.com](https://marketplace.21stark.com). GitHub slug: `21StarkCom/stark-bifrost`.
 
 The repo is also a **native Claude Code marketplace**: `.claude-plugin/marketplace.json` at the repo root is the manifest CC reads directly — no custom client.
 
@@ -18,7 +18,7 @@ The repo is also a **native Claude Code marketplace**: `.claude-plugin/marketpla
 ## Install (Claude Code)
 
 ```
-/plugin marketplace add 21-Stark-AI/stark-marketplace
+/plugin marketplace add 21StarkCom/stark-bifrost
 /plugin install stark-gh@stark-marketplace
 ```
 
@@ -79,7 +79,7 @@ More detail in [`CLAUDE.md`](CLAUDE.md).
 This distributes code that runs inside developer agents and, for `mcp/` entries, spawns commands on developer machines. Integrity rests on:
 
 1. Protected, linear `main` (no force-push, no bypass).
-2. CI-signed build manifest (GitHub OIDC → sigstore/cosign keyless, signer `repo:21-Stark-AI/stark-marketplace@refs/heads/main`).
+2. CI-signed build manifest (GitHub OIDC → sigstore/cosign keyless, signer `repo:21StarkCom/stark-bifrost@refs/heads/main`).
 3. Commit SHA, which the manifest binds digests to.
 
 `stark verify-manifest` checks all three. Self-computed digests alone are only an anti-drift signal.

@@ -6,14 +6,14 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/adapter"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/adapter/registry"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/aggregate"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/indexio"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/install"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/installplan"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/load"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/model"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/adapter/registry"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/aggregate"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/indexio"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/install"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/installplan"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/load"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
 )
 
 // catalogAdapter is the production installplan.Adapter (Task 14). It renders a source bundle's

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/model"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
 )
 
 func TestFetchIndexAndDetailViaContentsAPI(t *testing.T) {
@@ -34,9 +34,9 @@ func TestFetchIndexAndDetailViaContentsAPI(t *testing.T) {
 			t.Errorf("ref = %q", r.URL.Query().Get("ref"))
 		}
 		switch r.URL.Path {
-		case "/repos/21-Stark-AI/stark-marketplace/contents/dist/claude/index.json":
+		case "/repos/21StarkCom/stark-bifrost/contents/dist/claude/index.json":
 			w.Write([]byte(idxJSON))
-		case "/repos/21-Stark-AI/stark-marketplace/contents/dist/claude/bundles/stark-gh.json":
+		case "/repos/21StarkCom/stark-bifrost/contents/dist/claude/bundles/stark-gh.json":
 			w.Write([]byte(detailJSON))
 		default:
 			http.NotFound(w, r)
@@ -46,8 +46,8 @@ func TestFetchIndexAndDetailViaContentsAPI(t *testing.T) {
 
 	f := &Fetcher{
 		APIBase:  srv.URL,
-		Owner:    "21-Stark-AI",
-		Repo:     "stark-marketplace",
+		Owner:    "21StarkCom",
+		Repo:     "stark-bifrost",
 		Ref:      "main",
 		BasePath: "dist/claude",
 		Token:    wantToken,

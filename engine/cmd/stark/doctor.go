@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/install"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/install"
 	"github.com/spf13/cobra"
 )
 

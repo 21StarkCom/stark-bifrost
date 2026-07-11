@@ -3,7 +3,7 @@ package validate
 import (
 	"testing"
 
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/model"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
 )
 
 func TestFenceValidationCatchesUnterminated(t *testing.T) {

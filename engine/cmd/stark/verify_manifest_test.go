@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/provenance"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/provenance"
 )
 
 func TestVerifyManifestDigestsOnly(t *testing.T) {

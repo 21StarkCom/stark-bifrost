@@ -4,7 +4,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/model"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/model"
 )
 
 func checkSecurity(r *Result, where string, a *model.Artifact) {

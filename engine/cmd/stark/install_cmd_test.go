@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/indexio"
-	"github.com/21-Stark-AI/stark-marketplace/engine/internal/install"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/indexio"
+	"github.com/21StarkCom/stark-bifrost/engine/internal/install"
 )
 
 // installExitCode is the §9.8 mapping the install RunE uses; assert each typed error maps right.
