@@ -2,7 +2,7 @@
 name: stark-review-spec
 type: skill
 description: Multi-domain spec review with lead/wing fix loop. Codex (gpt-5.6-sol, xhigh reasoning) reviews 9 domains in parallel; Claude (opus-4-8) wing fixes findings. Use for review spec, review architecture.
-version: 0.1.20
+version: 0.1.21
 maturity: beta
 runtimes:
   - claude
@@ -219,14 +219,34 @@ set -e
 ```
 
 Exit codes:
-- `0` — `ok=true` AND no `failed_results` in any round
-- `1` — `ok=false` (dispatch failure) OR partial failure (failed lead dispatches, wing errors, unparseable findings)
+- `0` — ok: every domain completed a review at least once (transient dispatch
+  failures that recovered in a later round no longer fail the run)
+- `1` — terminal failure OR coverage gap (`coverage_gaps` nonempty: ≥1 domain
+  never completed a review in any round — its zero findings mean "never ran",
+  not "clean")
 - `2` — bad CLI arguments
 
 ## Phase 4: Surface failures
 
-Parse the receipt JSON. Every failure surface independently forces a non-zero
-exit so the user can act.
+Parse the receipt JSON. Blocking = `ok=false`, a coverage gap, or wing-fixer
+errors. Transient lead dispatch failures (the domain recovered in another
+round) are a **warning, not an abort** — do not soften the coverage-gap stop,
+and do not escalate transient warnings into one.
+
+**Growth ack gate:** when the receipt has `analytics.growth_ack_required =
+true`, the doc grew past the ratio limit while findings kept declining — the
+breaker deliberately did NOT stop the run (legitimate gap-filling on a thin
+spec looks exactly like this), but the operator must judge it before findings
+are posted. Ask via `AskUserQuestion`: *"Doc grew {analytics.growth_ratio}×
+(limit {config.analytics.max_doc_growth_ratio}×) but findings are declining —
+legitimate gap-filling or padding?"* with options **Continue (growth is
+legitimate)** / **Stop here (inspect the doc)**. On Continue: proceed and add
+`growth acked by operator` to the 5c summary. On Stop — or when running
+headless with no operator to ask — exit 1.
+
+```bash
+GROWTH_ACK=$(parse '(.analytics.growth_ack_required // false) | tostring')
+```
 
 ```bash
 parse() { printf '%s' "$RECEIPT_JSON" | jq -r "$1"; }
@@ -234,9 +254,12 @@ parse() { printf '%s' "$RECEIPT_JSON" | jq -r "$1"; }
 OK=$(parse '(.ok // false) | tostring')
 ERR_CODE=$(parse '.error.code // ""')
 ERR_MSG=$(parse '.error.message // ""')
-FAILED_LIST=$(parse '
-  (.rounds // [])[] as $r
+GAPS=$(parse '(.coverage_gaps // []) | join(", ")')
+TRANSIENT=$(parse '
+  (.coverage_gaps // []) as $gaps
+  | (.rounds // [])[] as $r
   | ($r.failed_results // [])[]
+  | select(.domain as $d | ($gaps | index($d)) | not)
   | "round \($r.round): \(.agent)/\(.domain) — \(.error)"
 ')
 WING_ERRORS=$(parse '
@@ -247,9 +270,13 @@ WING_ERRORS=$(parse '
       | "round \($r.round): patch failure on finding \(.finding_id) — \(.reason)" )
 ')
 
+PERSIST_ERRS=$(parse '(.persistence_errors // []) | join("\n")')
+
 failed=0
 if [ "$OK" = "false" ]; then error "Review failed: $ERR_CODE — $ERR_MSG"; failed=1; fi
-if [ -n "$FAILED_LIST" ]; then error "Lead dispatch failures:"; printf '  %s\n' "$FAILED_LIST" >&2; failed=1; fi
+if [ -n "$GAPS" ]; then error "COVERAGE GAP — these domains never completed a review in any round: $GAPS"; failed=1; fi
+if [ -n "$TRANSIENT" ]; then printf 'WARN: transient lead dispatch failures (domain recovered in another round):\n' >&2; printf '  %s\n' "$TRANSIENT" >&2; fi
+if [ -n "$PERSIST_ERRS" ]; then printf 'WARN: history persistence errors (run records may be incomplete):\n' >&2; printf '  %s\n' "$PERSIST_ERRS" >&2; fi
 if [ -n "$WING_ERRORS" ]; then error "Wing fixer issues:"; printf '  %s\n' "$WING_ERRORS" >&2; failed=1; fi
 [ "$failed" -ne 0 ] && exit 1
 ```
@@ -276,6 +303,7 @@ Rounds: {len(rounds)}
 Fixes committed: {fixes_committed}
 Coherence: {coherence.patches_applied} patches ({coherence.chars_delta} chars)
 Analytics: {analytics.grade} — growth {analytics.growth_ratio}x, flags [{analytics.flags}]
+Coverage: {all N domains completed | ⚠️ GAP: {coverage_gaps} never completed a review}
 History: {history_dir}
 ```
 
@@ -365,6 +393,59 @@ node --experimental-strip-types "$TOOLS/github_app.ts" --app stark-claude pr rev
 ```
 
 If posting fails for any identity, warn and continue.
+
+## Phase 6: Converge — review the delta of everything after the final review (ADR 0022)
+
+Every mutation before this point was reviewed — except the 5b manual fixes
+(the largest, least-constrained edits of the run). Phase 6 closes that hole
+with a **delta-scoped convergence review** of `last_reviewed_sha..HEAD`, run
+after all fixes are committed and pushed. This is the **terminal phase**:
+nothing may mutate the spec after it except fixes to its own findings
+(bounded below).
+
+Skip only under `--dry-run` or when no PR exists (nowhere to post).
+
+```bash
+LAST_SHA=$(parse '.last_reviewed_sha // ""')
+CONV_BASE_HEAD=$(git -C "$REPO_DIR" rev-parse HEAD)
+set +e
+CONV_RECEIPT=$(node --experimental-strip-types "$TOOLS/stark_review_doc.ts" \
+    --doc "$DOC" --prompts-dir spec-review \
+    --repo-dir "$REPO_DIR" --prompts-base "$PROMPTS_BASE" \
+    ${LEAD_AGENT:+--lead-agent "$LEAD_AGENT"} \
+    ${LEAD_MODEL:+--lead-model "$LEAD_MODEL"} \
+    --converge --base "$LAST_SHA")
+CONV_EXIT=$?
+set -e
+cparse() { printf '%s' "$CONV_RECEIPT" | jq -r "$1"; }
+C_OK=$(cparse '(.ok // false) | tostring')
+C_DELTA=$(cparse '(.converge.delta_chars // 0) | tostring')
+C_FINDINGS=$(cparse '(.unresolved // []) | length')
+```
+
+Outcomes — post ONE convergence comment (stark-claude App, `github_app.ts pr
+review $pr_number --comment`) carrying the exact claim, and print the same
+line as the final operator message. **Silence is not a valid terminal state.**
+
+- `CONV_EXIT != 0` or `C_OK != true` → **`⚠️ NOT converged — delta
+  unreviewed`** (include the receipt `error`); exit 1. An unreviewed delta is
+  a failed run.
+- `C_DELTA = 0` → **`✅ Converged — empty delta`** (nothing changed since the
+  final review round). Done.
+- `C_FINDINGS = 0` → **`✅ Converged — delta reviewed, clean`**. Done.
+- `C_FINDINGS > 0` → they are normal findings under the full contract. Write
+  `CONV_RECEIPT` to a temp file and run the 5a → 5b loop over it (post as
+  resolvable threads via `review_doc_findings.ts post` with a **fresh map
+  file**; fix each — AskUserQuestion when ambiguous; commit + push; resolve
+  each thread with the fix). Then:
+  - if ANY convergence finding was `high`/`critical`: run **one** more
+    convergence pass over the fixes themselves — `--converge --base
+    "$CONV_BASE_HEAD"` — and handle its findings the same way. Never a third
+    pass: post **`✅ Converged — delta reviewed, N findings (all resolved;
+    second pass: M)`**, or **`⚠️ NOT converged — unresolved high-severity
+    delta findings`** + exit 1 if the second pass still produced
+    `high`/`critical`.
+  - else post **`✅ Converged — delta reviewed, N findings (all resolved)`**.
 
 ## Debugging Dispatch Failures
 

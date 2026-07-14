@@ -55,6 +55,9 @@ export interface DocReviewConfig {
   /** Run the single coherence pass (contradictions / repetitions / fluff /
    * leftovers) after the fix loop, before the final review. */
   coherence_pass: boolean;
+  /** Per-doc history retention: keep this many run dirs (`<slug>/<run-id>/`),
+   * prune older ones. */
+  history_keep_runs: number;
   /** Process-health circuit breakers — see stark_review_doc_analytics_lib.ts. */
   analytics: {
     max_doc_growth_ratio: number;
@@ -71,6 +74,7 @@ export const DEFAULT_DOC_REVIEW_CONFIG: DocReviewConfig = {
   max_rounds: 3,
   max_codex_concurrent: 3,
   coherence_pass: true,
+  history_keep_runs: 20,
   analytics: {
     max_doc_growth_ratio: 2.0,
     max_round_growth_ratio: 1.5,
@@ -715,10 +719,25 @@ export interface PersistedRound {
   duration_s: number;
 }
 
+/** Run id: sortable timestamp + pid — unique per process, lexicographic
+ * order == chronological order. */
+export function newRunId(now: Date = new Date()): string {
+  const p = (n: number, w = 2): string => String(n).padStart(w, "0");
+  return (
+    `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}` +
+    `-${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}` +
+    `-${process.pid}`
+  );
+}
+
+/** Per-RUN history dir: `<home>/.claude/code-review/history/<promptsDir>s/<slug>/<runId>`.
+ * A re-run of the same doc gets its own dir — previous runs are never
+ * clobbered (the analytics contract). */
 export function buildHistoryDir(opts: {
   home: string;
   promptsDir: string;
   docPath: string;
+  runId: string;
 }): string {
   const base = path.join(
     opts.home,
@@ -728,13 +747,58 @@ export function buildHistoryDir(opts: {
     opts.promptsDir + "s",
   );
   const slug = path.basename(opts.docPath).replace(/\.md$/i, "");
-  return path.join(base, slug);
+  return path.join(base, slug, opts.runId);
+}
+
+/** Atomic JSON write: tmp file + rename, so a crash mid-write never leaves a
+ * truncated file where a reader expects valid JSON. */
+export function writeJsonAtomic(filePath: string, data: unknown): void {
+  const tmp = `${filePath}.tmp-${process.pid}`;
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
+  fs.renameSync(tmp, filePath);
+}
+
+/** Point `<slugDir>/latest` at the given run (atomic symlink swap; falls back
+ * to a `latest.txt` pointer file on filesystems without symlink support). */
+export function updateLatestPointer(slugDir: string, runId: string): void {
+  const link = path.join(slugDir, "latest");
+  const tmp = `${link}.tmp-${process.pid}`;
+  try {
+    try { fs.unlinkSync(tmp); } catch { /* stale tmp from a dead run */ }
+    fs.symlinkSync(runId, tmp);
+    fs.renameSync(tmp, link);
+  } catch {
+    try { fs.unlinkSync(tmp); } catch { /* ignore */ }
+    fs.writeFileSync(path.join(slugDir, "latest.txt"), runId + "\n");
+  }
+}
+
+/** Keep the newest `keep` run dirs under `<slugDir>` (run-ids sort
+ * lexicographically == chronologically), remove the rest. Never touches the
+ * `latest` pointer entries. Returns the pruned run-ids. */
+export function pruneRunDirs(slugDir: string, keep: number): string[] {
+  if (!fs.existsSync(slugDir) || keep <= 0) return [];
+  const runs = fs
+    .readdirSync(slugDir, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && !e.isSymbolicLink() && e.name !== "latest")
+    .map((e) => e.name)
+    .sort()
+    .reverse();
+  const pruned: string[] = [];
+  for (const name of runs.slice(keep)) {
+    try {
+      fs.rmSync(path.join(slugDir, name), { recursive: true, force: true });
+      pruned.push(name);
+    } catch { /* best-effort retention */ }
+  }
+  return pruned;
 }
 
 export function persistRoundsHistory(opts: {
   historyDir: string;
   docPath: string;
   promptsDir: string;
+  runId: string;
   rounds: PersistedRound[];
   models: Record<string, string>;
 }): void {
@@ -742,14 +806,12 @@ export function persistRoundsHistory(opts: {
   const payload = {
     doc: opts.docPath,
     prompts_dir: opts.promptsDir,
+    run_id: opts.runId,
     models: opts.models,
     rounds: opts.rounds,
     generated_at: new Date().toISOString(),
   };
-  fs.writeFileSync(
-    path.join(opts.historyDir, "rounds.json"),
-    JSON.stringify(payload, null, 2),
-  );
+  writeJsonAtomic(path.join(opts.historyDir, "rounds.json"), payload);
 }
 
 // ─── Concurrency primitives ────────────────────────────────────────────
@@ -780,4 +842,151 @@ export async function pmap<T, U>(
   }
   await Promise.all(runners);
   return out;
+}
+
+// ─── Coverage + adaptive timeouts ────────────────────────────────────────
+
+export interface DomainCoverage {
+  attempts: number;
+  completions: number;
+  timeouts: number;
+  last_error: string | null;
+}
+
+export interface CoverageReport {
+  domains: Record<string, DomainCoverage>;
+  /** Sorted keys of domains with attempts > 0 && completions === 0. */
+  gaps: string[];
+}
+
+/**
+ * Aggregate per-domain completion across every round of a run. A domain that
+ * was attempted but never completed in ANY round is a coverage gap — the
+ * review it was responsible for never happened, which is not the same thing
+ * as a clean pass.
+ */
+export function computeCoverage(
+  rounds: ReadonlyArray<{ results: ReadonlyArray<{ domain: string; error: string | null }> }>,
+  allDomains: readonly string[],
+): CoverageReport {
+  const domains: Record<string, DomainCoverage> = {};
+  for (const d of allDomains) domains[d] = { attempts: 0, completions: 0, timeouts: 0, last_error: null };
+  for (const round of rounds) {
+    for (const r of round.results) {
+      const c = domains[r.domain] ?? (domains[r.domain] = { attempts: 0, completions: 0, timeouts: 0, last_error: null });
+      c.attempts++;
+      if (r.error === null) c.completions++;
+      else {
+        if (r.error === "timeout") c.timeouts++;
+        c.last_error = r.error;
+      }
+    }
+  }
+  const gaps = Object.keys(domains)
+    .filter((d) => domains[d]!.attempts > 0 && domains[d]!.completions === 0)
+    .sort();
+  return { domains, gaps };
+}
+
+/** Doubling escalation capped at 3× base: 600 → 1200 → 1800 → 1800. A domain
+ * that timed out gets a bigger ceiling on its next attempt instead of
+ * re-failing at the same one every round. */
+export function nextDomainTimeout(currentSec: number, baseSec: number): number {
+  return Math.min(baseSec * 3, currentSec * 2);
+}
+
+export const TIMEOUT_SCALE_CHARS = 16_000;
+
+/** Scale the base lead timeout with document size: 1× up to
+ * TIMEOUT_SCALE_CHARS, linear above, capped at 3× base. A 200-line spec
+ * reviews fine at 600s; a 700-line plan starved at the same ceiling. */
+export function scaleTimeoutForDocSize(baseSec: number, docChars: number): number {
+  const scaled = Math.round(baseSec * (docChars / TIMEOUT_SCALE_CHARS));
+  return Math.min(baseSec * 3, Math.max(baseSec, scaled));
+}
+
+/** Single source of truth for run outcome: a coverage gap is a failed run —
+ * `ok` and the exit code must say so, not just a buried per-round error. */
+export function deriveRunOutcome(opts: {
+  dispatchFailureEarlyExit: boolean;
+  coverageGaps: readonly string[];
+}): { ok: boolean; exitCode: 0 | 1; error: { code: string; message: string } | null } {
+  if (opts.dispatchFailureEarlyExit) {
+    return {
+      ok: false,
+      exitCode: 1,
+      error: { code: "dispatch_failure", message: "All lead reviewers failed in a round; see rounds[].failed_results" },
+    };
+  }
+  if (opts.coverageGaps.length > 0) {
+    return {
+      ok: false,
+      exitCode: 1,
+      error: {
+        code: "coverage_gap",
+        message: `domains never completed a review in any round: ${opts.coverageGaps.join(", ")}`,
+      },
+    };
+  }
+  return { ok: true, exitCode: 0, error: null };
+}
+
+// ─── Convergence pass (ADR 0022) ─────────────────────────────────────────
+
+/**
+ * Resolve the convergence prompt (root-level `convergence.md`, NOT a
+ * discovered domain) + the agent preamble. Repo override first
+ * (`.code-review/<repoSubdir>/convergence.md`), then the global prompts dir.
+ * Returns null when no convergence prompt exists anywhere.
+ */
+export function resolveConvergencePromptSources(opts: {
+  agent: AgentName;
+  promptsDir: string;
+  repoDir?: string | null;
+  repoSubdir: string;
+}): PromptSources | null {
+  const repoDir = opts.repoDir ?? null;
+  let convText: string | null = null;
+  let agentText: string | null = null;
+
+  if (repoDir) {
+    const base = path.join(repoDir, ".code-review", opts.repoSubdir);
+    const c = path.join(base, "convergence.md");
+    if (fs.existsSync(c)) convText = fs.readFileSync(c, "utf-8");
+    const a = path.join(base, opts.agent, "agent.md");
+    if (fs.existsSync(a)) agentText = fs.readFileSync(a, "utf-8");
+  }
+  if (convText === null) {
+    const c = path.join(opts.promptsDir, "convergence.md");
+    if (fs.existsSync(c)) convText = fs.readFileSync(c, "utf-8");
+  }
+  if (agentText === null) {
+    const a = path.join(opts.promptsDir, opts.agent, "agent.md");
+    if (fs.existsSync(a)) agentText = fs.readFileSync(a, "utf-8");
+  }
+  if (convText === null) return null;
+  return { agentMd: agentText ?? "", domainPrompt: convText };
+}
+
+/**
+ * The convergence reviewer's input: the delta under review first, the full
+ * document after it as verification context. Fed to `buildReviewerPrompt` in
+ * place of the bare document.
+ */
+export function buildConvergenceInput(opts: {
+  base: string;
+  delta: string;
+  doc: string;
+}): string {
+  return [
+    `## Delta under review (git diff ${opts.base}..HEAD)`,
+    "",
+    "```diff",
+    opts.delta.trim(),
+    "```",
+    "",
+    "## Full document (context only — verify the delta against it, do not re-review it)",
+    "",
+    opts.doc,
+  ].join("\n");
 }

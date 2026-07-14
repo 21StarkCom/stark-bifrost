@@ -12,6 +12,7 @@
  * 10 rounds because every round's fixes create next round's findings. The
  * guards catch that at round 2-3 instead of round 10.
  */
+import type { DomainCoverage } from "./stark_review_doc_lib.ts";
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -57,7 +58,8 @@ export type HealthFlag =
   | "non_convergent"      // to_fix did not decline for N consecutive rounds
   | "no_net_convergence"  // the run ended with as many findings as it started with
   | "churn"               // recurring findings dominate — fixes aren't sticking
-  | "patch_thrash";       // most attempted patches failed to apply
+  | "patch_thrash"        // most attempted patches failed to apply
+  | "coverage_gap";       // ≥1 domain never completed a review in any round
 
 export type HealthGrade = "healthy" | "degraded" | "runaway";
 
@@ -68,6 +70,10 @@ export interface GuardVerdict {
   abort_reason: string | null;
   /** All flags raised so far (abort-worthy or advisory). */
   flags: HealthFlag[];
+  /** Growth breached the ratio limit but findings are converging — the run
+   * continues, but the operator must ack the growth before findings are
+   * posted (the skills' Phase 4 gate). */
+  growth_ack_required: boolean;
 }
 
 export interface ReviewAnalytics {
@@ -83,6 +89,14 @@ export interface ReviewAnalytics {
   grade: HealthGrade;
   aborted_early: boolean;
   abort_reason: string | null;
+  /** Doc grew past the ratio limit while findings kept declining — the run
+   * completed, but the operator must ack the growth before Phase 5 posts. */
+  growth_ack_required: boolean;
+  /** Domains that never completed a review in any round (coverage gaps). */
+  coverage_gaps: string[];
+  /** Per-domain completion counts across the whole run (null when the
+   * dispatcher predates coverage tracking or errored before round 1). */
+  coverage: Record<string, DomainCoverage> | null;
   /** Free-form judged observations rendered into the sidecar. */
   notes: string[];
 }
@@ -138,36 +152,53 @@ export function evaluateGuards(
     }
   }
 
-  // Abort: total growth vs original.
-  if (last && ratio(last.doc_chars_after, originalChars) > thresholds.max_doc_growth_ratio) {
-    flags.add("runaway_growth");
-    abort = true;
-    abortReason = `doc grew ${ratio(last.doc_chars_after, originalChars).toFixed(2)}x vs original (limit ${thresholds.max_doc_growth_ratio}x)`;
-  }
+  // Growth vs original — a real signal but NOT a hard stop on its own:
+  // legitimate gap-filling on a thin document is indistinguishable from
+  // padding by this ratio alone (a real spec review tripped at 2.63× while
+  // findings were declining — correct behavior, punished). Growth alone
+  // demands an operator ack; growth AND non-convergence together abort.
+  const growthRatio = last ? ratio(last.doc_chars_after, originalChars) : 0;
+  const growthBreach = growthRatio > thresholds.max_doc_growth_ratio;
+  if (growthBreach) flags.add("runaway_growth");
 
-  // Abort: non-convergence — to_fix did not decline for N consecutive rounds.
+  // Non-convergence — to_fix did not decline for N consecutive rounds: the
+  // wing is spinning its wheels. Aborts on its own.
   const n = thresholds.non_convergent_rounds;
-  if (!abort && fixRounds.length >= n + 1) {
+  let nonConvergent = false;
+  if (fixRounds.length >= n + 1) {
     let stuck = 0;
     for (let i = fixRounds.length - n; i < fixRounds.length; i++) {
       const cur = fixRounds[i]!;
       const prev = fixRounds[i - 1]!;
       if (cur.to_fix > 0 && cur.to_fix >= prev.to_fix) stuck++;
     }
-    if (stuck >= n) {
-      flags.add("non_convergent");
-      abort = true;
-      abortReason = `findings did not decline for ${n} consecutive rounds (last: ${last?.to_fix ?? 0} to fix)`;
-    }
+    nonConvergent = stuck >= n;
+  }
+  if (nonConvergent) flags.add("non_convergent");
+
+  if (nonConvergent && growthBreach) {
+    abort = true;
+    abortReason = `doc grew ${growthRatio.toFixed(2)}x vs original (limit ${thresholds.max_doc_growth_ratio}x) AND findings did not decline for ${n} consecutive rounds — the loop is padding, not converging`;
+  } else if (nonConvergent) {
+    abort = true;
+    abortReason = `findings did not decline for ${n} consecutive rounds (last: ${last?.to_fix ?? 0} to fix)`;
   }
 
-  return { abort, abort_reason: abortReason, flags: [...flags] };
+  return {
+    abort,
+    abort_reason: abortReason,
+    flags: [...flags],
+    growth_ack_required: growthBreach && !abort,
+  };
 }
 
 // ─── Final judgment ──────────────────────────────────────────────────────
 
 export function judgeGrade(flags: readonly HealthFlag[]): HealthGrade {
-  if (flags.includes("runaway_growth") || flags.includes("non_convergent")) return "runaway";
+  // Growth alone is degraded, not runaway: it needs an operator's judgment
+  // (gap-filling vs padding), not a verdict. Non-convergence — with or
+  // without growth — is the loop demonstrably failing: runaway.
+  if (flags.includes("non_convergent")) return "runaway";
   if (flags.length > 0) return "degraded";
   return "healthy";
 }
@@ -203,11 +234,17 @@ export function buildAnalytics(opts: {
   abortedEarly: boolean;
   abortReason: string | null;
   extraFlags?: HealthFlag[];
+  coverage?: Record<string, DomainCoverage> | null;
+  coverageGaps?: string[];
 }): ReviewAnalytics {
   const guard = evaluateGuards(opts.originalDoc.length, opts.roundStats, opts.thresholds);
   const flags = [...new Set([...guard.flags, ...(opts.extraFlags ?? [])])];
   if (!hasNetConvergence(opts.roundStats) && !flags.includes("non_convergent")) {
     flags.push("no_net_convergence");
+  }
+  const coverageGaps = opts.coverageGaps ?? [];
+  if (coverageGaps.length > 0 && !flags.includes("coverage_gap")) {
+    flags.push("coverage_gap");
   }
   const originalChars = opts.originalDoc.length;
   const finalChars = opts.finalDoc.length;
@@ -228,6 +265,18 @@ export function buildAnalytics(opts: {
     const delta = coherence.doc_chars_after - coherence.doc_chars_before;
     notes.push(`Coherence pass: ${coherence.patches_applied} patch(es), ${delta <= 0 ? "removed" : "added"} ${Math.abs(delta)} chars.`);
   }
+  if (guard.growth_ack_required) {
+    notes.push(`Growth ack required: the doc grew ${(opts.finalDoc.length / Math.max(1, opts.originalDoc.length)).toFixed(2)}x (limit ${opts.thresholds.max_doc_growth_ratio}x) while findings kept declining. The breaker did not stop the run — legitimate gap-filling on a thin doc looks like this — but the operator must judge growth vs padding before findings are posted.`);
+  }
+  if (coverageGaps.length > 0) {
+    const detail = coverageGaps
+      .map((d) => {
+        const c = opts.coverage?.[d];
+        return c ? `${d} (0/${c.attempts} rounds${c.timeouts > 0 ? `, ${c.timeouts} timeouts` : ""})` : d;
+      })
+      .join(", ");
+    notes.push(`Coverage gap: ${detail} never completed a review in ANY round — zero findings from these domains means "never ran", not "clean". The grade is capped and the run is not ok until they complete.`);
+  }
   if (flags.includes("no_net_convergence")) notes.push("No net convergence: the run ended with roughly as many open findings as round 1 started with — the rounds spent their budget treading water. Consider tighter prompts or reviewing the unresolved list by hand instead of more rounds.");
   if (flags.includes("churn")) notes.push("Churn: a large share of findings recur across rounds — fixes are not sticking or reviewers keep re-flagging authored content.");
   if (flags.includes("patch_thrash")) notes.push("Patch thrash: most wing patches failed unique-match validation.");
@@ -245,6 +294,9 @@ export function buildAnalytics(opts: {
     grade: judgeGrade(flags),
     aborted_early: opts.abortedEarly,
     abort_reason: opts.abortReason,
+    growth_ack_required: guard.growth_ack_required,
+    coverage_gaps: coverageGaps,
+    coverage: opts.coverage ?? null,
     notes,
   };
 }
@@ -257,6 +309,22 @@ const GRADE_BADGE: Record<HealthGrade, string> = {
   runaway: "🔴 runaway",
 };
 
+function renderCoverageLine(a: ReviewAnalytics): string {
+  if (a.coverage_gaps.length > 0) {
+    const detail = a.coverage_gaps
+      .map((d) => {
+        const c = a.coverage?.[d];
+        return c ? `${d} (0/${c.attempts}${c.timeouts > 0 ? `, ${c.timeouts} timeouts` : ""})` : d;
+      })
+      .join("; ");
+    return `- **Coverage:** ⚠️ GAP — never completed: ${detail}`;
+  }
+  if (a.coverage && Object.keys(a.coverage).length > 0) {
+    return `- **Coverage:** all ${Object.keys(a.coverage).length} domains completed`;
+  }
+  return `- **Coverage:** not tracked (pre-coverage run)`;
+}
+
 export function renderAnalyticsMarkdown(a: ReviewAnalytics): string {
   const lines: string[] = [
     `# Review process analytics — ${a.doc}`,
@@ -265,6 +333,8 @@ export function renderAnalyticsMarkdown(a: ReviewAnalytics): string {
     `- **Pipeline:** ${a.prompts_dir}`,
     `- **Doc size:** ${a.original.lines} → ${a.final.lines} lines (${a.original.chars} → ${a.final.chars} chars, ${a.growth_ratio}x)`,
     `- **Rounds:** ${a.rounds.length}${a.aborted_early ? ` — **stopped early:** ${a.abort_reason}` : ""}`,
+    ...(a.growth_ack_required ? [`- **⚠️ Growth ack required:** ${a.growth_ratio}x growth with declining findings — operator must judge gap-filling vs padding`] : []),
+    renderCoverageLine(a),
     `- **Generated:** ${a.generated_at}`,
     "",
     "| Round | Kind | Findings raw→fix (recurring) | Patches applied/attempted (failed) | Doc lines | Duration |",
@@ -273,6 +343,140 @@ export function renderAnalyticsMarkdown(a: ReviewAnalytics): string {
   for (const r of a.rounds) {
     lines.push(
       `| ${r.round} | ${r.kind} | ${r.raw_findings}→${r.to_fix} (${r.recurring}) | ${r.patches_applied}/${r.patches_attempted} (${r.patch_failures}) | ${r.doc_lines_before}→${r.doc_lines_after} | ${r.duration_s.toFixed(0)}s |`,
+    );
+  }
+  if (a.notes.length > 0) {
+    lines.push("", "## Judgment", "");
+    for (const n of a.notes) lines.push(`- ${n}`);
+  }
+  lines.push("");
+  return lines.join("\n");
+}
+
+// ─── PR-cycle (code review) analytics ────────────────────────────────────
+
+/** One review round of the PR cycle, as recorded in its round-N.json history
+ * files (`stark_review.ts` writeRoundHistory). Structural — pass the parsed
+ * history payloads straight in. */
+export interface CodeReviewRoundInput {
+  round: number;
+  results: ReadonlyArray<{
+    agent: string;
+    domain: string;
+    duration_s: number;
+    error: string | null;
+    findings: ReadonlyArray<{ domain?: string; classification?: string }>;
+  }>;
+}
+
+export interface CodeReviewAnalytics {
+  kind: "code-review";
+  repo: string;
+  pr: number;
+  generated_at: string;
+  grade: HealthGrade;
+  flags: HealthFlag[];
+  /** Domains that never completed a review in any round of this run. */
+  coverage_gaps: string[];
+  per_domain: Record<string, {
+    attempts: number;
+    completions: number;
+    timeouts: number;
+    total_duration_s: number;
+    findings_by_classification: Record<string, number>;
+  }>;
+  rounds: number;
+  total_findings: number;
+  total_duration_s: number;
+  notes: string[];
+}
+
+/** Aggregate a PR-review run's rounds into the two answers the operator asks:
+ * where did the time go (per-domain durations + outcomes) and who produces
+ * signal vs noise (per-domain classification counts). Coverage gaps cap the
+ * grade exactly like the doc cycle. */
+export function buildCodeReviewAnalytics(opts: {
+  repo: string;
+  pr: number;
+  rounds: readonly CodeReviewRoundInput[];
+}): CodeReviewAnalytics {
+  const per: CodeReviewAnalytics["per_domain"] = {};
+  let totalFindings = 0;
+  let totalDuration = 0;
+  const bucket = (domain: string) =>
+    per[domain] ?? (per[domain] = {
+      attempts: 0, completions: 0, timeouts: 0,
+      total_duration_s: 0, findings_by_classification: {},
+    });
+  for (const round of opts.rounds) {
+    for (const r of round.results) {
+      const b = bucket(r.domain);
+      b.attempts++;
+      b.total_duration_s += r.duration_s;
+      totalDuration += r.duration_s;
+      if (r.error === null) b.completions++;
+      else if (r.error === "timeout") b.timeouts++;
+      for (const f of r.findings) {
+        const c = f.classification ?? "unclassified";
+        const fb = bucket(f.domain ?? r.domain);
+        fb.findings_by_classification[c] = (fb.findings_by_classification[c] ?? 0) + 1;
+        totalFindings++;
+      }
+    }
+  }
+  const gaps = Object.keys(per)
+    .filter((d) => per[d]!.attempts > 0 && per[d]!.completions === 0)
+    .sort();
+  const flags: HealthFlag[] = gaps.length > 0 ? ["coverage_gap"] : [];
+  const notes: string[] = [];
+  if (gaps.length > 0) {
+    notes.push(`Coverage gap: ${gaps.join(", ")} never completed a review in this run — zero findings from these domains means "never ran", not "clean".`);
+  }
+  const noisy = Object.entries(per)
+    .map(([d, b]) => {
+      const fx = b.findings_by_classification;
+      const noise = (fx.noise ?? 0) + (fx.false_positive ?? 0);
+      const total = Object.values(fx).reduce((a, n) => a + n, 0);
+      return { d, noise, total };
+    })
+    .filter((x) => x.total >= 3 && x.noise / x.total > 0.5);
+  for (const n of noisy) {
+    notes.push(`Noisy domain: ${n.d} — ${n.noise}/${n.total} findings classified noise/false_positive. Candidate for /stark-review-improvement.`);
+  }
+  return {
+    kind: "code-review",
+    repo: opts.repo,
+    pr: opts.pr,
+    generated_at: new Date().toISOString(),
+    grade: judgeGrade(flags),
+    flags,
+    coverage_gaps: gaps,
+    per_domain: per,
+    rounds: opts.rounds.length,
+    total_findings: totalFindings,
+    total_duration_s: Number(totalDuration.toFixed(1)),
+    notes,
+  };
+}
+
+export function renderCodeReviewAnalyticsMarkdown(a: CodeReviewAnalytics): string {
+  const lines: string[] = [
+    `# Review process analytics — ${a.repo}#${a.pr}`,
+    "",
+    `- **Grade:** ${GRADE_BADGE[a.grade]}${a.flags.length > 0 ? ` (${a.flags.join(", ")})` : ""}`,
+    `- **Rounds:** ${a.rounds} — ${a.total_findings} findings, ${a.total_duration_s.toFixed(0)}s total review time`,
+    a.coverage_gaps.length > 0
+      ? `- **Coverage:** ⚠️ GAP — never completed: ${a.coverage_gaps.join("; ")}`
+      : `- **Coverage:** all ${Object.keys(a.per_domain).length} domains completed`,
+    `- **Generated:** ${a.generated_at}`,
+    "",
+    "| Domain | Runs (ok/timeout) | Time | fix | noise | fp | ignored |",
+    "|--------|-------------------|------|-----|-------|----|---------|",
+  ];
+  for (const [d, b] of Object.entries(a.per_domain).sort()) {
+    const fx = b.findings_by_classification;
+    lines.push(
+      `| ${d} | ${b.completions}/${b.attempts}${b.timeouts > 0 ? ` (${b.timeouts} t/o)` : ""} | ${b.total_duration_s.toFixed(0)}s | ${fx.fix ?? 0} | ${fx.noise ?? 0} | ${fx.false_positive ?? 0} | ${fx.ignored ?? 0} |`,
     );
   }
   if (a.notes.length > 0) {

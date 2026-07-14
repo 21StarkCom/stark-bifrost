@@ -25,8 +25,10 @@
  * stderr: human-readable progress + summary.
  *
  * Exit codes:
- *   0 — ok and no failed_results / unposted reviews
- *   1 — partial or terminal failure
+ *   0 — ok: every domain completed a review at least once (transient
+ *       dispatch failures that recovered in a later round do not fail the run)
+ *   1 — terminal failure OR coverage gap (≥1 domain never completed a
+ *       review in any round — reported in receipt.coverage_gaps)
  *   2 — bad arguments
  */
 import { spawn } from "node:child_process";
@@ -38,24 +40,36 @@ import { realpathSync } from "node:fs";
 import type { AgentName } from "./stark_review_lib.ts";
 import {
   applyPatches,
+  buildConvergenceInput,
   buildFixerPrompt,
   buildReviewerPrompt,
   buildHistoryDir,
   classifyFindings,
+  computeCoverage,
   DEFAULT_DOC_REVIEW_CONFIG,
+  deriveRunOutcome,
   type DocFinding,
   type DocReviewConfig,
+  type DomainCoverage,
   discoverDomains,
   docFindingId,
   type FixerPatch,
   MAX_ROUNDS_CEILING,
+  newRunId,
+  nextDomainTimeout,
   parseFixerOutput,
   parseReviewerOutput,
   persistRoundsHistory,
   type PersistedRound,
   pmap,
+  type PromptSources,
+  pruneRunDirs,
+  resolveConvergencePromptSources,
   resolveDocPromptSources,
+  scaleTimeoutForDocSize,
   selectFindingsToFix,
+  updateLatestPointer,
+  writeJsonAtomic,
 } from "./stark_review_doc_lib.ts";
 import { buildCoherencePrompt } from "./stark_review_doc_lib.ts";
 import {
@@ -714,6 +728,9 @@ function loadDocReviewConfig(promptsDir: PromptsDir): DocReviewConfig {
   if (typeof section.coherence_pass === "boolean") {
     cfg.coherence_pass = section.coherence_pass;
   }
+  if (typeof section.history_keep_runs === "number" && Number.isFinite(section.history_keep_runs) && section.history_keep_runs >= 1) {
+    cfg.history_keep_runs = Math.floor(section.history_keep_runs);
+  }
   if (isPlainObject(section.analytics)) {
     const a = section.analytics;
     const num = (v: unknown, min: number): number | null =>
@@ -737,15 +754,19 @@ async function runLeadReview(opts: {
   promptsBase: string;
   repoDir: string;
   maxConcurrent: number;
-  timeoutSec: number;
+  /** Per-domain timeout — escalated across rounds for domains that timed out. */
+  timeoutSecFor: (domain: string) => number;
   leadAgent: LeadAgent;
   model: string;
   reasoningEffort: string;
+  /** Convergence mode: bypass per-domain prompt resolution (there is no
+   * NN-<domain>.md for "convergence") and use these sources for every domain. */
+  promptSourcesOverride?: PromptSources;
 }): Promise<LeadDispatchResult[]> {
   const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "stark-doc-review-"));
   try {
     return await pmap(opts.domains, opts.maxConcurrent, async (domain) => {
-      const sources = resolveDocPromptSources({
+      const sources = opts.promptSourcesOverride ?? resolveDocPromptSources({
         agent: opts.leadAgent,
         domain,
         promptsDir: path.join(opts.promptsBase, opts.promptsDir),
@@ -762,13 +783,13 @@ async function runLeadReview(opts: {
         ? await runClaudeReviewer({
           domain,
           prompt,
-          timeoutSec: opts.timeoutSec,
+          timeoutSec: opts.timeoutSecFor(domain),
           model: opts.model,
         })
         : await runCodexReviewer({
           domain,
           prompt,
-          timeoutSec: opts.timeoutSec,
+          timeoutSec: opts.timeoutSecFor(domain),
           model: opts.model,
           reasoningEffort: opts.reasoningEffort,
           cwd,
@@ -915,6 +936,9 @@ export interface DispatchOptions {
   maxWingAttempts: number;
   commitFixes: boolean;
   coherencePass: boolean;
+  /** Convergence mode (ADR 0022): review only the git delta base..HEAD of the
+   * doc instead of running the fix loop. Null = normal review. */
+  convergeBase: string | null;
 }
 
 interface Receipt {
@@ -929,6 +953,12 @@ interface Receipt {
     disabled_domains: string[];
   };
   domains: string[];
+  /** Per-domain completion across the whole run. Zero findings from a domain
+   * that never completed means "never ran", not "clean". */
+  coverage: Record<string, DomainCoverage>;
+  /** Domains that never completed a review in ANY round — a coverage gap.
+   * Nonempty gaps make the run not-ok (exit 1). */
+  coverage_gaps: string[];
   rounds: Array<{
     round: number;
     kind: "review-fix" | "final-review";
@@ -968,7 +998,19 @@ interface Receipt {
   }>;
   unresolved: DocFinding[];
   fixes_committed: number;
+  /** Unique id of this run; the history dir is `<slug>/<run_id>` so re-runs
+   * never clobber earlier records. */
+  run_id: string;
   history_dir: string;
+  /** History/analytics writes that failed ("phase: message") — surfaced, never
+   * swallowed. Persistence failures warn; they do not fail the run. */
+  persistence_errors: string[];
+  /** HEAD after the final review round — the convergence pass diffs from
+   * here (`--converge --base <sha>`). Null on dry runs / git failure. */
+  last_reviewed_sha: string | null;
+  /** Set when this run WAS a convergence pass: the diff base and delta size
+   * (delta_chars 0 = trivially converged, nothing was dispatched). */
+  converge: { base: string; delta_chars: number } | null;
   /** Process-health analytics — monitors and judges the review run itself. */
   analytics: ReviewAnalytics | null;
   coherence: {
@@ -1030,16 +1072,40 @@ export async function dispatchDocReview(opts: DispatchOptions): Promise<{
     };
   }
 
-  // Domain discovery + disabled filter
-  const allDomains = discoverDomains(promptsRoot, ["codex", "claude", "gemini"]);
-  const enabledDomains = allDomains.filter((d) => !opts.config.disabled_domains.includes(d.key));
-  if (enabledDomains.length === 0) {
-    return {
-      receipt: errorReceipt(opts, "no_domains", `No domains discovered under ${promptsRoot}`),
-      exitCode: 1,
-    };
+  // Convergence mode (ADR 0022): single "convergence" pseudo-domain with a
+  // root-level prompt; skips domain discovery, the fix loop, and coherence.
+  const convergeMode = opts.convergeBase !== null;
+  let convergeSources: PromptSources | null = null;
+  if (convergeMode) {
+    convergeSources = resolveConvergencePromptSources({
+      agent: opts.leadAgent,
+      promptsDir: promptsRoot,
+      repoDir: opts.repoDir,
+      repoSubdir: repoSubdirFor(opts.promptsDir),
+    });
+    if (!convergeSources) {
+      return {
+        receipt: errorReceipt(opts, "convergence_prompt_missing", `${path.join(promptsRoot, "convergence.md")} not found`),
+        exitCode: 1,
+      };
+    }
   }
-  const domainKeys = enabledDomains.map((d) => d.key);
+
+  // Domain discovery + disabled filter
+  let domainKeys: string[];
+  if (convergeMode) {
+    domainKeys = ["convergence"];
+  } else {
+    const allDomains = discoverDomains(promptsRoot, ["codex", "claude", "gemini"]);
+    const enabledDomains = allDomains.filter((d) => !opts.config.disabled_domains.includes(d.key));
+    if (enabledDomains.length === 0) {
+      return {
+        receipt: errorReceipt(opts, "no_domains", `No domains discovered under ${promptsRoot}`),
+        exitCode: 1,
+      };
+    }
+    domainKeys = enabledDomains.map((d) => d.key);
+  }
 
   // Pre-flight: dirty-doc check
   const docAbs = path.resolve(opts.repoDir, opts.docPath);
@@ -1069,6 +1135,23 @@ export async function dispatchDocReview(opts: DispatchOptions): Promise<{
 
   let currentDoc = fs.readFileSync(docAbs, "utf-8");
   const originalDoc = currentDoc;
+
+  // Convergence delta — everything that changed since the last-reviewed state.
+  let convergeDelta = "";
+  if (convergeMode) {
+    const diff = await runGit(["diff", `${opts.convergeBase}..HEAD`, "--", opts.docPath], opts.repoDir, 30);
+    if (diff.code !== 0) {
+      return {
+        receipt: errorReceipt(opts, "converge_diff_failed", diff.stderr.trim() || `git diff ${opts.convergeBase}..HEAD failed`),
+        exitCode: 1,
+      };
+    }
+    convergeDelta = diff.stdout;
+    log(`converge: base=${opts.convergeBase} delta=${convergeDelta.length} chars`);
+    if (convergeDelta.trim().length === 0) {
+      log("converge: empty delta — nothing changed since the last review (trivially converged)");
+    }
+  }
   const roundStats: RoundStat[] = [];
   let abortedEarly = false;
   let abortReason: string | null = null;
@@ -1076,6 +1159,27 @@ export async function dispatchDocReview(opts: DispatchOptions): Promise<{
     ? Math.min(MAX_ROUNDS_CEILING, Math.max(1, opts.maxRoundsOverride))
     : opts.config.max_rounds;
   const codexConcurrent = opts.codexConcurrentOverride ?? opts.config.max_codex_concurrent;
+
+  // Adaptive lead timeouts: base scales with document size, and a domain that
+  // timed out gets an escalated ceiling on its next attempt (600 → 1200 →
+  // 1800) instead of re-failing at the same one every round.
+  const effectiveBase = scaleTimeoutForDocSize(opts.leadTimeoutSec, originalDoc.length);
+  if (effectiveBase !== opts.leadTimeoutSec) {
+    log(`lead timeout scaled for doc size: ${opts.leadTimeoutSec}s → ${effectiveBase}s (${originalDoc.length} chars)`);
+  }
+  const domainTimeouts = new Map<string, number>(domainKeys.map((d) => [d, effectiveBase]));
+  const timeoutSecFor = (domain: string): number => domainTimeouts.get(domain) ?? effectiveBase;
+  const escalateTimeouts = (results: LeadDispatchResult[]): void => {
+    for (const r of results) {
+      if (r.error !== "timeout") continue;
+      const cur = domainTimeouts.get(r.domain) ?? effectiveBase;
+      const next = nextDomainTimeout(cur, effectiveBase);
+      if (next > cur) {
+        log(`timeout escalation: ${r.domain} ${cur}s → ${next}s on next attempt`);
+        domainTimeouts.set(r.domain, next);
+      }
+    }
+  };
 
   log(`config: prompts=${opts.promptsDir} max_rounds=${maxRounds} fix_threshold=${opts.config.fix_threshold} codex_concurrent=${codexConcurrent} dry_run=${opts.dryRun}`);
   log(`domains: ${domainKeys.join(", ")}`);
@@ -1087,7 +1191,60 @@ export async function dispatchDocReview(opts: DispatchOptions): Promise<{
   let fixesCommitted = 0;
   let dispatchFailureEarlyExit = false;
 
-  for (let roundNum = 1; roundNum <= maxRounds; roundNum++) {
+  // Run-record durability: per-run history dir + incremental persistence so a
+  // dead process leaves partials on disk, not nothing. Write failures are
+  // surfaced in the receipt (persistence_errors), never swallowed — but they
+  // warn rather than fail the run.
+  const runId = newRunId();
+  const historyDir = buildHistoryDir({ home: HOME, promptsDir: opts.promptsDir, docPath: opts.docPath, runId });
+  const persistenceErrors: string[] = [];
+  const persistFailed = (phase: string, err: unknown): void => {
+    const msg = `${phase}: ${(err as Error).message}`;
+    persistenceErrors.push(msg);
+    log(`WARN history persistence failed — ${msg}`);
+  };
+  const runModels = { lead: opts.leadModel, wing: opts.wingModel, lead_agent: opts.leadAgent, wing_agent: opts.wingAgent };
+  const persistRunSnapshot = (phase: string, final = false): void => {
+    if (opts.dryRun) return;
+    try {
+      persistRoundsHistory({
+        historyDir,
+        docPath: opts.docPath,
+        promptsDir: opts.promptsDir,
+        runId,
+        rounds: persistedRounds,
+        models: runModels,
+      });
+    } catch (err) { persistFailed(`${phase}/rounds`, err); }
+    try {
+      const cov = computeCoverage(receiptRounds, domainKeys);
+      const snap = buildAnalytics({
+        doc: opts.docPath,
+        promptsDir: opts.promptsDir,
+        originalDoc,
+        finalDoc: currentDoc,
+        roundStats,
+        thresholds: opts.config.analytics,
+        abortedEarly,
+        abortReason,
+        coverage: cov.domains,
+        coverageGaps: cov.gaps,
+      });
+      writeJsonAtomic(path.join(historyDir, "analytics.json"), final ? snap : { ...snap, partial: true });
+    } catch (err) { persistFailed(`${phase}/analytics`, err); }
+  };
+  if (!opts.dryRun) {
+    try {
+      fs.mkdirSync(historyDir, { recursive: true });
+      updateLatestPointer(path.dirname(historyDir), runId);
+      const pruned = pruneRunDirs(path.dirname(historyDir), opts.config.history_keep_runs);
+      if (pruned.length > 0) log(`history retention: pruned ${pruned.length} old run(s) (keep ${opts.config.history_keep_runs})`);
+    } catch (err) {
+      persistFailed("init", err);
+    }
+  }
+
+  for (let roundNum = 1; !convergeMode && roundNum <= maxRounds; roundNum++) {
     const roundT0 = process.hrtime.bigint();
     log(`── Round ${roundNum} (review-fix) ──`);
 
@@ -1098,11 +1255,12 @@ export async function dispatchDocReview(opts: DispatchOptions): Promise<{
       promptsBase: opts.promptsBase,
       repoDir: opts.repoDir,
       maxConcurrent: codexConcurrent,
-      timeoutSec: opts.leadTimeoutSec,
+      timeoutSecFor,
       leadAgent: opts.leadAgent,
       model: opts.leadModel,
       reasoningEffort: CODEX_REASONING_EFFORT_XHIGH,
     });
+    escalateTimeouts(leadResults);
     const succeeded = leadResults.filter((r) => r.error === null).length;
     if (succeeded === 0) {
       log(`round ${roundNum}: dispatch failure (0/${leadResults.length} succeeded). Aborting fix loop.`);
@@ -1116,6 +1274,7 @@ export async function dispatchDocReview(opts: DispatchOptions): Promise<{
       });
       receiptRounds.push(failedRound);
       persistedRounds.push(toPersisted(failedRound, "review-fix"));
+      persistRunSnapshot(`round-${roundNum}`);
       dispatchFailureEarlyExit = true;
       break;
     }
@@ -1165,6 +1324,7 @@ export async function dispatchDocReview(opts: DispatchOptions): Promise<{
         toPersisted(receiptRounds[receiptRounds.length - 1]!, "review-fix"),
       );
       pushRoundStat(null, elapsedSec(roundT0));
+      persistRunSnapshot(`round-${roundNum}`);
       break;
     }
 
@@ -1184,6 +1344,7 @@ export async function dispatchDocReview(opts: DispatchOptions): Promise<{
         toPersisted(receiptRounds[receiptRounds.length - 1]!, "review-fix"),
       );
       pushRoundStat(null, elapsedSec(roundT0));
+      persistRunSnapshot(`round-${roundNum}`);
       break;
     }
 
@@ -1257,6 +1418,7 @@ export async function dispatchDocReview(opts: DispatchOptions): Promise<{
       },
       elapsedSec(roundT0),
     );
+    persistRunSnapshot(`round-${roundNum}`);
 
     // Process-health circuit breakers — stop a pathological loop (runaway
     // doc growth, non-converging findings) instead of grinding to maxRounds.
@@ -1266,6 +1428,9 @@ export async function dispatchDocReview(opts: DispatchOptions): Promise<{
       abortReason = guard.abort_reason;
       log(`round ${roundNum}: CIRCUIT BREAKER — ${guard.abort_reason}. Stopping fix loop.`);
       break;
+    }
+    if (guard.growth_ack_required) {
+      log(`round ${roundNum}: GROWTH WARNING — doc grew past ${opts.config.analytics.max_doc_growth_ratio}x while findings decline; continuing (operator ack required before Phase 5 — receipt analytics.growth_ack_required)`);
     }
 
     if (wingOutcome.applied.length === 0) {
@@ -1279,7 +1444,7 @@ export async function dispatchDocReview(opts: DispatchOptions): Promise<{
   // contract; runs even after a circuit-breaker abort (that's when the doc
   // needs it most). Skipped on dispatch failure or dry-run.
   let coherenceReceipt: Receipt["coherence"] = null;
-  if (opts.coherencePass && !dispatchFailureEarlyExit && !opts.dryRun) {
+  if (opts.coherencePass && !convergeMode && !dispatchFailureEarlyExit && !opts.dryRun) {
     log("── Coherence pass ──");
     const cohT0 = process.hrtime.bigint();
     const docBefore = currentDoc;
@@ -1356,24 +1521,31 @@ export async function dispatchDocReview(opts: DispatchOptions): Promise<{
       commit_sha: commitSha,
       error: cohError,
     };
+    persistRunSnapshot("coherence");
   }
 
-  // Final review-only round (skipped on dispatch failure or dry-run)
+  // Final review-only round (skipped on dispatch failure or dry-run; in
+  // convergence mode this is THE review — delta-scoped — and an empty delta
+  // means there is nothing to dispatch).
   let unresolved: DocFinding[] = [];
-  if (!dispatchFailureEarlyExit && !opts.dryRun) {
-    log("── Final review (review-only) ──");
+  if (!dispatchFailureEarlyExit && !opts.dryRun && !(convergeMode && convergeDelta.trim().length === 0)) {
+    log(convergeMode ? "── Convergence review (delta-scoped) ──" : "── Final review (review-only) ──");
     const finalT0 = process.hrtime.bigint();
+    const reviewInput = convergeMode
+      ? buildConvergenceInput({ base: opts.convergeBase!, delta: convergeDelta, doc: currentDoc })
+      : currentDoc;
     const finalLead = await runLeadReview({
-      doc: currentDoc,
+      doc: reviewInput,
       domains: domainKeys,
       promptsDir: opts.promptsDir,
       promptsBase: opts.promptsBase,
       repoDir: opts.repoDir,
       maxConcurrent: codexConcurrent,
-      timeoutSec: opts.leadTimeoutSec,
+      timeoutSecFor,
       leadAgent: opts.leadAgent,
       model: opts.leadModel,
       reasoningEffort: CODEX_REASONING_EFFORT_XHIGH,
+      ...(convergeSources ? { promptSourcesOverride: convergeSources } : {}),
     });
     const allRaw: DocFinding[] = finalLead.flatMap((r) => r.findings);
     const classified = classifyFindings(allRaw, {
@@ -1408,21 +1580,30 @@ export async function dispatchDocReview(opts: DispatchOptions): Promise<{
       patch_failures: 0,
       duration_s: elapsedSec(finalT0),
     });
+    persistRunSnapshot("final-review");
   }
 
-  const historyDir = buildHistoryDir({
-    home: HOME,
-    promptsDir: opts.promptsDir,
-    docPath: opts.docPath,
-  });
+  // Where "last reviewed" is: HEAD after the final review round (fix +
+  // coherence commits included). The convergence pass diffs from here
+  // (`--converge --base <sha>`); the exact reviewed content is snapshotted
+  // into the run dir for forensics and non-committed flows.
+  let lastReviewedSha: string | null = null;
   if (!opts.dryRun) {
-    persistRoundsHistory({
-      historyDir,
-      docPath: opts.docPath,
-      promptsDir: opts.promptsDir,
-      rounds: persistedRounds,
-      models: { lead: opts.leadModel, wing: opts.wingModel, lead_agent: opts.leadAgent, wing_agent: opts.wingAgent },
-    });
+    const head = await runGit(["rev-parse", "HEAD"], opts.repoDir, 15);
+    lastReviewedSha = head.code === 0 ? head.stdout.trim() : null;
+    try {
+      fs.writeFileSync(path.join(historyDir, "final-reviewed-doc.md"), currentDoc);
+    } catch (err) {
+      persistFailed("final/doc-snapshot", err);
+    }
+  }
+
+  // Coverage — per-domain completion across the whole run. A domain that
+  // never completed in any round is a coverage gap: the receipt, analytics,
+  // ok flag, and exit code all say so.
+  const coverageReport = computeCoverage(receiptRounds, domainKeys);
+  if (coverageReport.gaps.length > 0) {
+    log(`COVERAGE GAP: ${coverageReport.gaps.join(", ")} never completed a review in any round`);
   }
 
   // Analytics — monitor + judge the run itself, then persist as sidecars:
@@ -1437,24 +1618,30 @@ export async function dispatchDocReview(opts: DispatchOptions): Promise<{
     thresholds: opts.config.analytics,
     abortedEarly,
     abortReason,
+    coverage: coverageReport.domains,
+    coverageGaps: coverageReport.gaps,
   });
   const analyticsSidecar = docAbs.replace(/\.md$/i, "") + ".review-analytics.md";
   if (!opts.dryRun) {
     try {
       fs.mkdirSync(historyDir, { recursive: true });
-      fs.writeFileSync(path.join(historyDir, "analytics.json"), JSON.stringify(analytics, null, 2));
+      writeJsonAtomic(path.join(historyDir, "analytics.json"), analytics);
       fs.writeFileSync(analyticsSidecar, renderAnalyticsMarkdown(analytics));
     } catch (err) {
-      log(`analytics sidecar write failed: ${(err as Error).message}`);
+      persistFailed("final/analytics", err);
     }
   }
   log(`analytics: grade=${analytics.grade} growth=${analytics.growth_ratio}x flags=[${analytics.flags.join(", ")}]${abortedEarly ? ` aborted="${abortReason}"` : ""}`);
 
-  const anyFailedResults = receiptRounds.some((r) => r.failed_results.length > 0);
-  const exitCode = dispatchFailureEarlyExit || anyFailedResults ? 1 : 0;
+  // Outcome — single source of truth (deriveRunOutcome): a coverage gap is a
+  // failed run; transient failures that recovered in a later round are not.
+  const outcome = deriveRunOutcome({
+    dispatchFailureEarlyExit,
+    coverageGaps: coverageReport.gaps,
+  });
 
   const receipt: Receipt = {
-    ok: !dispatchFailureEarlyExit,
+    ok: outcome.ok,
     doc: opts.docPath,
     prompts_dir: opts.promptsDir,
     models: { lead: opts.leadModel, wing: opts.wingModel, lead_agent: opts.leadAgent, wing_agent: opts.wingAgent },
@@ -1465,17 +1652,30 @@ export async function dispatchDocReview(opts: DispatchOptions): Promise<{
       disabled_domains: opts.config.disabled_domains,
     },
     domains: domainKeys,
+    coverage: coverageReport.domains,
+    coverage_gaps: coverageReport.gaps,
     rounds: receiptRounds,
     unresolved,
     fixes_committed: fixesCommitted,
+    run_id: runId,
     history_dir: historyDir,
+    persistence_errors: persistenceErrors,
+    last_reviewed_sha: lastReviewedSha,
+    converge: convergeMode ? { base: opts.convergeBase!, delta_chars: convergeDelta.length } : null,
     analytics,
     coherence: coherenceReceipt,
-    error: dispatchFailureEarlyExit
-      ? { code: "dispatch_failure", message: "All lead reviewers failed in a round; see rounds[].failed_results" }
-      : null,
+    error: outcome.error,
   };
-  return { receipt, exitCode };
+  // The receipt itself lands in the run dir too — today it exists only on
+  // stdout, which is exactly what evaporates when the process dies.
+  if (!opts.dryRun) {
+    try {
+      writeJsonAtomic(path.join(historyDir, "receipt.json"), receipt);
+    } catch (err) {
+      persistFailed("final/receipt", err);
+    }
+  }
+  return { receipt, exitCode: outcome.exitCode };
 }
 
 function countByDomain(findings: DocFinding[]): Record<string, number> {
@@ -1593,10 +1793,16 @@ function errorReceipt(opts: DispatchOptions, code: string, message: string): Rec
       disabled_domains: opts.config.disabled_domains,
     },
     domains: [],
+    coverage: {},
+    coverage_gaps: [],
     rounds: [],
     unresolved: [],
     fixes_committed: 0,
+    run_id: "",
     history_dir: "",
+    persistence_errors: [],
+    last_reviewed_sha: null,
+    converge: null,
     analytics: null,
     coherence: null,
     error: { code, message },
@@ -1623,6 +1829,8 @@ interface CliArgs {
   maxWingAttempts: number;
   commitFixes: boolean;
   coherencePass: boolean;
+  converge: boolean;
+  convergeBase: string | null;
   json: boolean;
 }
 
@@ -1650,6 +1858,9 @@ function usage(): string {
     "  --force                    proceed even if doc has uncommitted changes",
     "  --no-commit                apply fixes in-place but skip git commit",
     "  --no-coherence             skip the post-fix-loop coherence pass (contradictions/repetitions/fluff/leftovers)",
+    "  --converge --base SHA      convergence mode (ADR 0022): review ONLY the git delta base..HEAD of the doc",
+    "                             (post-final-review mutations — wing/coherence/operator fixes). Skips the fix",
+    "                             loop + coherence; --rounds is ignored; incompatible with --dry-run",
     "  --json                     emit receipt JSON to stdout (default true; here for clarity)",
   ].join("\n");
 }
@@ -1673,6 +1884,8 @@ function parseArgs(argv: ReadonlyArray<string>): CliArgs {
     maxWingAttempts: 2,
     commitFixes: true,
     coherencePass: true,
+    converge: false,
+    convergeBase: null,
     json: true,
   };
   const need = (i: number, flag: string): string => {
@@ -1730,6 +1943,8 @@ function parseArgs(argv: ReadonlyArray<string>): CliArgs {
       case "--force":              args.force = true; break;
       case "--no-commit":          args.commitFixes = false; break;
       case "--no-coherence":       args.coherencePass = false; break;
+      case "--converge":           args.converge = true; break;
+      case "--base":               args.convergeBase = need(i, a); i++; break;
       case "--json":               args.json = true; break;
       case "-h": case "--help":    process.stdout.write(usage() + "\n"); process.exit(0);
       default: throw new Error(`unknown arg: ${a}`);
@@ -1754,6 +1969,9 @@ function parseArgs(argv: ReadonlyArray<string>): CliArgs {
   if (args.maxWingAttempts < 1) throw new Error("--max-wing-attempts must be >= 1");
   if (args.leadTimeoutSec <= 0) throw new Error("--lead-timeout must be > 0");
   if (args.wingTimeoutSec <= 0) throw new Error("--wing-timeout must be > 0");
+  if (args.converge && args.convergeBase === null) throw new Error("--converge requires --base <sha>");
+  if (!args.converge && args.convergeBase !== null) throw new Error("--base only applies with --converge");
+  if (args.converge && args.dryRun) throw new Error("--converge cannot be combined with --dry-run");
   return args;
 }
 
@@ -1786,6 +2004,7 @@ async function main(): Promise<number> {
     maxWingAttempts: args.maxWingAttempts,
     commitFixes: args.commitFixes,
     coherencePass: args.coherencePass && config.coherence_pass,
+    convergeBase: args.converge ? args.convergeBase : null,
   };
 
   const { receipt, exitCode } = await dispatchDocReview(dispatchOpts);
@@ -1796,7 +2015,7 @@ async function main(): Promise<number> {
     0,
   );
   log(
-    `done: rounds=${receipt.rounds.length} findings=${totalFindings} unresolved=${receipt.unresolved.length} fixes_committed=${receipt.fixes_committed} ok=${receipt.ok}`,
+    `done: rounds=${receipt.rounds.length} findings=${totalFindings} unresolved=${receipt.unresolved.length} fixes_committed=${receipt.fixes_committed} ok=${receipt.ok} coverage_gaps=${receipt.coverage_gaps.length > 0 ? receipt.coverage_gaps.join(",") : "none"}`,
   );
   return exitCode;
 }

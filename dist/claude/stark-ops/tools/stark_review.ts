@@ -29,6 +29,12 @@ import {
 } from "./stark_review_lib.ts";
 import type { BuildContext, BuiltCommand, ParseError, ParseResult } from "./agent_codex.ts";
 import { assetToolsDir } from "./asset_root_lib.ts";
+import {
+  buildCodeReviewAnalytics,
+  type CodeReviewAnalytics,
+  type CodeReviewRoundInput,
+  renderCodeReviewAnalyticsMarkdown,
+} from "./stark_review_doc_analytics_lib.ts";
 
 // ─── Agent port loader (Phase 3, preserved) ─────────────────────────────────
 
@@ -2014,6 +2020,15 @@ export interface SuccessReceipt {
   comments_posted: number;
   unposted_reviews: Array<{ round: number; reason: string }>;
   history_files: string[];
+  /** Process analytics for this run (per-domain time, signal/noise, coverage
+   * gaps) — also persisted as analytics-rX-rY.{json,md} in the history dir. */
+  analytics: CodeReviewAnalytics | null;
+  /** History/analytics writes that failed — surfaced, never swallowed. */
+  persistence_errors: string[];
+  /** Convergence round (ADR 0022): when the FINAL fix-capable round pushed a
+   * fix, one extra review-only pass re-reviews the new HEAD (no fix step
+   * follows, so it terminates by construction). Null = not needed this run. */
+  convergence: { ran: boolean; round: number | null; findings: number | null; error: string | null } | null;
 }
 
 export interface FailureReceipt {
@@ -2023,6 +2038,7 @@ export interface FailureReceipt {
   pr: number;
   error: { code: string; message: string; [k: string]: unknown };
   rounds: ReceiptRound[];
+  analytics?: CodeReviewAnalytics | null;
 }
 
 export type Receipt = SuccessReceipt | FailureReceipt;
@@ -2869,10 +2885,15 @@ export async function main(
   try {
     let lastPass: PassResult | null = null;
     let terminalCode: { code: string; message: string } | null = null;
+    // True only when the LAST loop iteration pushed a fix — that diff was
+    // verified by test_command alone (earlier fixes get re-reviewed by the
+    // next round's pass). Drives the convergence round below (ADR 0022).
+    let finalRoundPushedFix = false;
 
     for (let round = 1; round <= cli.maxRounds; round++) {
       // Re-issue GH App tokens at the start of each round (~1h lifetime).
       if (round > 1) _resetTokenCacheForTests();
+      finalRoundPushedFix = false;
 
       const pass = await runReviewPass(passCtx, passDeps);
       lastPass = pass;
@@ -3096,6 +3117,37 @@ export async function main(
         head_repo: pushTarget.fullName, ref: pushTarget.ref,
       }, auditOpts);
       fixesPushed += stagedPaths.length;
+      finalRoundPushedFix = true;
+    }
+
+    // ── Convergence round (ADR 0022) ────────────────────────────────────────
+    // Every non-final fix is re-reviewed by the next round against the new
+    // HEAD; a fix pushed by the LAST round was verified only by test_command.
+    // Close that hole with ONE review-only pass over the updated HEAD — no
+    // fix step follows it, so it terminates by construction. Its findings
+    // post through the normal machinery like any round's.
+    let convergence: SuccessReceipt["convergence"] = null;
+    if (!terminalCode && finalRoundPushedFix) {
+      progress("convergence — re-reviewing the final round's fix (review-only)");
+      _resetTokenCacheForTests();
+      const pass = await runReviewPass(passCtx, passDeps);
+      if (pass.kind === "terminal") {
+        convergence = { ran: false, round: null, findings: null, error: `${pass.code}: ${pass.message}` };
+        if (pass.partial) {
+          receiptRounds.push(pass.partial);
+          if (pass.historyPath) historyFiles.push(pass.historyPath);
+        }
+      } else {
+        receiptRounds.push(buildRound(
+          pass.round, pass.allFindings, pass.failedResults, pass.parseErrors,
+          pass.classifierEvents, pass.durationMs,
+        ));
+        historyFiles.push(pass.historyPath);
+        commentsPosted += pass.commentsPosted;
+        if (pass.unpostedReason) unposted.push({ round: pass.round, reason: pass.unpostedReason });
+        convergence = { ran: true, round: pass.round, findings: pass.allFindings.length, error: null };
+        progress(`convergence  round=${pass.round}  findings=${pass.allFindings.length}`);
+      }
     }
 
     // ── Best-effort prune (separate lock) ──────────────────────────────────
@@ -3107,11 +3159,42 @@ export async function main(
       });
     } catch { /* best-effort */ }
 
+    // Process analytics — aggregate THIS run's round files (history_files)
+    // into per-domain time + signal/noise + coverage; persist next to them
+    // (unique per run via the round-number range, so re-reviews of the same
+    // PR never clobber an earlier run's analytics) and embed in the receipt.
+    // Every run leaves a record — the failure path writes it too.
+    const persistenceErrors: string[] = [];
+    const buildAndPersistAnalytics = (): CodeReviewAnalytics | null => {
+      if (historyFiles.length === 0) return null;
+      try {
+        const roundInputs: CodeReviewRoundInput[] = historyFiles.map((f) => {
+          const d = JSON.parse(fs.readFileSync(f, "utf8")) as { round: number; results: CodeReviewRoundInput["results"] };
+          return { round: d.round, results: d.results };
+        });
+        const analytics = buildCodeReviewAnalytics({ repo, pr, rounds: roundInputs });
+        const dir = historyDir(home, repo, pr);
+        const nums = roundInputs.map((r) => r.round);
+        const stem = `analytics-r${Math.min(...nums)}-r${Math.max(...nums)}`;
+        const jsonPath = path.join(dir, `${stem}.json`);
+        fs.writeFileSync(`${jsonPath}.tmp`, JSON.stringify(analytics, null, 2));
+        fs.renameSync(`${jsonPath}.tmp`, jsonPath);
+        fs.writeFileSync(path.join(dir, `${stem}.md`), renderCodeReviewAnalyticsMarkdown(analytics));
+        progress(`analytics  grade=${analytics.grade}${analytics.coverage_gaps.length > 0 ? `  coverage_gaps=${analytics.coverage_gaps.join(",")}` : ""}`);
+        return analytics;
+      } catch (err) {
+        persistenceErrors.push(`analytics: ${(err as Error).message}`);
+        progress(`analytics  WRITE FAILED: ${(err as Error).message}`);
+        return null;
+      }
+    };
+
     if (terminalCode) {
       const r: FailureReceipt = {
         ok: false, schema_version: 1, repo, pr,
         error: { code: terminalCode.code, message: terminalCode.message },
         rounds: receiptRounds,
+        analytics: buildAndPersistAnalytics(),
       };
       emitReceipt(r, cli.json);
       progress(`done  fail=${terminalCode.code}  ${fmtDuration(Date.now() - mainStart)}`);
@@ -3126,6 +3209,9 @@ export async function main(
       comments_posted: commentsPosted,
       unposted_reviews: unposted,
       history_files: historyFiles,
+      analytics: buildAndPersistAnalytics(),
+      persistence_errors: persistenceErrors,
+      convergence,
     };
     if (lastPass && lastPass.kind === "ok") {
       // commentsPosted included; nothing else to merge.
