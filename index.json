@@ -694,7 +694,7 @@
       ],
       "category": "planning",
       "maturity": "beta",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "runtimes": [
         "claude",
         "codex"
@@ -703,7 +703,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:032263d9a9c3db7f68d0e84871e0b4b6c7700777c08bc4d06606fb944f986c00"
+      "digest": "sha256:043e427f18aed705f9cae16483b58a450ccac037ab984315cde631accb2c4497"
     },
     {
       "name": "stark-spec-to-plan",
@@ -718,7 +718,7 @@
       ],
       "category": "planning",
       "maturity": "beta",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "runtimes": [
         "claude",
         "codex"
