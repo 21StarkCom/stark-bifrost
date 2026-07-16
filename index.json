@@ -22,7 +22,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.22",
+      "version": "0.1.23",
       "runtimes": [
         "claude",
         "codex"
@@ -47,7 +47,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.22",
+      "version": "0.1.23",
       "runtimes": [
         "claude",
         "codex"
@@ -72,7 +72,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.22",
+      "version": "0.1.23",
       "runtimes": [
         "claude",
         "codex"
@@ -97,7 +97,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.22",
+      "version": "0.1.23",
       "runtimes": [
         "claude",
         "codex"
@@ -122,7 +122,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.22",
+      "version": "0.1.23",
       "runtimes": [
         "claude",
         "codex"
@@ -147,7 +147,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.22",
+      "version": "0.1.23",
       "runtimes": [
         "claude",
         "codex"
@@ -156,7 +156,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:066201bd999dc21384b747281c41e8428b7f74676e477756f2db55792230297e"
+      "digest": "sha256:c28346d8c4525597a87e8810b9a0912dccf6440a7ead68de31666b2a6ff2c51a"
     },
     {
       "name": "stark-review-spec-improvement",
@@ -172,7 +172,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.22",
+      "version": "0.1.23",
       "runtimes": [
         "claude",
         "codex"
@@ -197,7 +197,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.22",
+      "version": "0.1.23",
       "runtimes": [
         "claude",
         "codex"
@@ -206,7 +206,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:991b4f7a12a1669ad91c64615ea658326768e07f97742533d7d0427321b1fa8c"
+      "digest": "sha256:31a2d88cca34ffd350bdc1fecfc3e71eb4c6c694df7dea3ae8be2e0677ee831f"
     },
     {
       "name": "stark-review",
@@ -222,7 +222,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.22",
+      "version": "0.1.23",
       "runtimes": [
         "claude",
         "codex"
@@ -247,7 +247,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.22",
+      "version": "0.1.23",
       "runtimes": [
         "claude",
         "codex"
@@ -272,7 +272,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.22",
+      "version": "0.1.23",
       "runtimes": [
         "claude",
         "codex"
@@ -297,7 +297,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.1.22",
+      "version": "0.1.23",
       "runtimes": [
         "claude",
         "codex"
