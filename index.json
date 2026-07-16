@@ -309,6 +309,31 @@
       "digest": "sha256:90f7c6a76a5c03b5ffeb13d52ef56a9c3970654b1e202c49e49ecfd31e00c9b0"
     },
     {
+      "name": "remember",
+      "type": "skill",
+      "bundle": "stark-brain",
+      "description": "Persist a durable fact or note into Aryeh's second-brain vault via the brain MCP (or the brain CLI as fallback). Use whenever the user EXPLICITLY asks to remember, save, persist, capture, or \"write back\" something to the second brain / memory / vault — phrasings like \"remember that…\", \"save this to my brain\", \"add this to memory\", \"/remember …\", \"note this down for later\". Routes one-line facts to append_to_memory and structured knowledge (a project, repo, tool, person, cloud resource) to upsert_note, validates + secret-scans, then commits and merges the capture to main. Companion to the brain MCP. (Triggers on explicit save intent only for now — not yet on passively-observed facts.)",
+      "tags": [
+        "memory",
+        "brain",
+        "vault",
+        "knowledge",
+        "capture"
+      ],
+      "category": "productivity",
+      "maturity": "beta",
+      "version": "0.1.0",
+      "runtimes": [
+        "claude",
+        "codex"
+      ],
+      "support": {
+        "claude": "native",
+        "codex": "native"
+      },
+      "digest": "sha256:21b073438de6add35ebe32e18d0da29b45b50d7db18df21ada541a40fbccb603"
+    },
+    {
       "name": "stark-adr",
       "type": "skill",
       "bundle": "stark-constitution",

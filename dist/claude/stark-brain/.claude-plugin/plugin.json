@@ -1,0 +1,16 @@
+{
+  "author": {
+    "email": "engineering@21stark.com",
+    "name": "21 Stark AI"
+  },
+  "description": "Second-brain memory capture — persist durable facts and structured notes into the Markdown vault via the brain MCP (CLI fallback), secret-scanned and validated, then landed on main via a branch + PR.",
+  "keywords": [
+    "memory",
+    "brain",
+    "vault",
+    "knowledge",
+    "capture"
+  ],
+  "name": "stark-brain",
+  "version": "0.1.0"
+}
