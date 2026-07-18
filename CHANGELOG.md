@@ -4,6 +4,17 @@ All notable changes to `stark-marketplace`. The format follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-07-18
+
+### Added
+- **`stark-write-spec`** skill in the **stark-analyze** bundle (`0.2.0 → 0.3.0`) — contract-bounded spec authoring, pipeline stage 0 (before `/stark-review-spec`). A bounded lead/wing loop drafts and verifies a nine-section spec against a host-owned closed-enum contract; `done` is recomputed host-side. Bundle now spans spec-kit's specify + analyze phases.
+
+### Changed
+- **stark-ops** `0.2.1 → 0.2.2` — absorbs pre-existing `stark-housekeeping` source drift surfaced by a full re-sync.
+- Root `VERSION` `0.3.0 → 0.4.0` (MINOR — bundle membership changed).
+
+_Note: `0.2.x`–`0.3.0` shipped as script-based publishes after GitHub Actions were disabled for $0 spend; git tags + signed releases remain paused at v0.1.6. `/plugin` consumers read `main` directly._
+
 ## [0.1.6] — 2026-06-07
 
 ### Fixed
