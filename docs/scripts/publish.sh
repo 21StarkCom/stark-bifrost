@@ -51,6 +51,12 @@ done
 [ -d "$STARK_SKILLS/skill" ] || { echo "stark-skills not found at $STARK_SKILLS (set STARK_SKILLS)" >&2; exit 1; }
 echo "→ stark-skills: $STARK_SKILLS"
 
+# Skills deliberately NOT published to the marketplace (personal/experimental).
+# A skill must be either a member of some bundle.yaml OR listed here — otherwise
+# the coverage gate below fails. This is what stops a NEW stark-skills skill from
+# being silently dropped by `stark sync` (which only pulls declared members).
+EXCLUDED_SKILLS=(stark-blog-sharpen stark-voice)
+
 # bump <file> <minor|patch> — handles both a bundle.yaml `version: X.Y.Z` line and
 # the bare-`X.Y.Z` root VERSION file. minor: X.(Y+1).0 · patch: X.Y.(Z+1).
 bump() {
@@ -94,6 +100,27 @@ if [ -n "$REMOVE_SKILL" ]; then
   bump "$BFILE" minor; MEMBERSHIP_CHANGED=1
   echo "→ removed $REMOVE_SKILL from $BUNDLE (minor) → $(grep -m1 '^version:' "$BFILE")"
 fi
+
+# --- coverage gate: every stark-skills skill must be claimed or excluded ------
+# Kills the "new skill silently dropped" papercut: `stark sync` only pulls skills
+# already declared in a bundle.yaml, so a freshly-added stark-skills skill with no
+# membership vanishes without a trace. Fail loudly here instead.
+claimed="$(grep -rhE '^[[:space:]]*-[[:space:]]+stark-' "$REPO_ROOT"/catalog/*/bundle.yaml 2>/dev/null | sed -E 's/^[[:space:]]*-[[:space:]]+//' | sort -u)"
+orphans=""
+for d in "$STARK_SKILLS"/skill/stark-*/; do
+  s="$(basename "$d")"
+  printf '%s\n' "$claimed" | grep -qxF "$s" && continue
+  [[ " ${EXCLUDED_SKILLS[*]} " == *" $s "* ]] && continue
+  orphans="$orphans $s"
+done
+if [ -n "$orphans" ]; then
+  echo "ERROR: stark-skills skill(s) not published and not excluded:$orphans" >&2
+  echo "  → add each to a bundle's catalog/<bundle>/bundle.yaml 'skills:' list" >&2
+  echo "    (or run with --add-skill NAME --bundle B), OR add to EXCLUDED_SKILLS" >&2
+  echo "    in this script if it is intentionally unpublished." >&2
+  exit 1
+fi
+echo "→ coverage gate clean: every stark-skills skill is claimed or excluded"
 
 cd engine
 
