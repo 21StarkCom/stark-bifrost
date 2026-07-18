@@ -595,7 +595,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "runtimes": [
         "claude",
         "codex"
@@ -620,7 +620,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "runtimes": [
         "claude",
         "codex"
@@ -645,7 +645,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "runtimes": [
         "claude",
         "codex"
@@ -670,7 +670,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "runtimes": [
         "claude",
         "codex"
@@ -679,7 +679,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:ff5961d40d343e5fad3cafe48faa9553bbcec4390ba93e04c2f38222135a661f"
+      "digest": "sha256:9cfa0a133d59ddbc49dfdedd35e7a2b17aeccd88aeacaa4b8f719f722b2394d5"
     },
     {
       "name": "stark-release",
@@ -695,7 +695,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "runtimes": [
         "claude",
         "codex"
@@ -720,7 +720,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "runtimes": [
         "claude",
         "codex"
