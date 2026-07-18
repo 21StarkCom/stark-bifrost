@@ -22,7 +22,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "runtimes": [
         "claude",
         "codex"
@@ -47,7 +47,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "runtimes": [
         "claude",
         "codex"
@@ -72,7 +72,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "runtimes": [
         "claude",
         "codex"
@@ -97,7 +97,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "runtimes": [
         "claude",
         "codex"
@@ -122,7 +122,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "runtimes": [
         "claude",
         "codex"
@@ -147,7 +147,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "runtimes": [
         "claude",
         "codex"
@@ -172,7 +172,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "runtimes": [
         "claude",
         "codex"
@@ -197,7 +197,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "runtimes": [
         "claude",
         "codex"
@@ -222,7 +222,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "runtimes": [
         "claude",
         "codex"
@@ -247,7 +247,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "runtimes": [
         "claude",
         "codex"
@@ -272,7 +272,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "runtimes": [
         "claude",
         "codex"
@@ -297,7 +297,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "runtimes": [
         "claude",
         "codex"
@@ -322,7 +322,7 @@
       ],
       "category": "review",
       "maturity": "beta",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "runtimes": [
         "claude",
         "codex"
@@ -332,6 +332,31 @@
         "codex": "native"
       },
       "digest": "sha256:90f7c6a76a5c03b5ffeb13d52ef56a9c3970654b1e202c49e49ecfd31e00c9b0"
+    },
+    {
+      "name": "stark-write-spec",
+      "type": "skill",
+      "bundle": "stark-analyze",
+      "description": "Author a spec doc via a bounded lead/wing contract loop. The lead drafts the nine-section spec, the wing verifies it against a host-owned contract, and the loop repeats until the contract is satisfied or a bounded breaker fires. Findings land on a create-or-adopt PR. Default agents: claude lead, codex wing. v1 supports claude|codex only (no gemini).",
+      "tags": [
+        "review",
+        "red-team",
+        "quality",
+        "analyze",
+        "logging"
+      ],
+      "category": "review",
+      "maturity": "beta",
+      "version": "0.3.0",
+      "runtimes": [
+        "claude",
+        "codex"
+      ],
+      "support": {
+        "claude": "native",
+        "codex": "native"
+      },
+      "digest": "sha256:3150257098974a8e81dea1cc2405eaf87a940db77860056047e873c2a2064d25"
     },
     {
       "name": "remember",
@@ -595,7 +620,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "runtimes": [
         "claude",
         "codex"
@@ -620,7 +645,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "runtimes": [
         "claude",
         "codex"
@@ -645,7 +670,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "runtimes": [
         "claude",
         "codex"
@@ -670,7 +695,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "runtimes": [
         "claude",
         "codex"
@@ -679,7 +704,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:ff5961d40d343e5fad3cafe48faa9553bbcec4390ba93e04c2f38222135a661f"
+      "digest": "sha256:9cfa0a133d59ddbc49dfdedd35e7a2b17aeccd88aeacaa4b8f719f722b2394d5"
     },
     {
       "name": "stark-release",
@@ -695,7 +720,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "runtimes": [
         "claude",
         "codex"
@@ -720,7 +745,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "runtimes": [
         "claude",
         "codex"
