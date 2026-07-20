@@ -2,7 +2,7 @@
 name: stark-session
 type: skill
 description: Session start (context, git state, briefing) and end (tests, merge, push). Use for session start/end, catch me up.
-version: 0.2.2
+version: 0.2.3
 maturity: beta
 runtimes:
   - claude
@@ -37,7 +37,10 @@ A single TS CLI gathers every fact you need into one JSON blob; you render the b
 
 ```bash
 TOOLS="${STARK_REVIEW_TOOLS:-${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/code-review}/tools}"
-SESSION_CLI="node --experimental-strip-types --no-warnings $TOOLS/stark_session.ts"
+# A function, not a string var: zsh does NOT word-split `$VAR`, so a
+# multi-word command stuffed in a variable is run as one bogus command name.
+# Define this in the SAME Bash call that uses it (shells don't persist across calls).
+session() { node --experimental-strip-types --no-warnings "$TOOLS/stark_session.ts" "$@"; }
 ```
 
 ## Config
@@ -77,7 +80,7 @@ Read and internalize — do NOT display:
 ### Phase 2 — Collect session state
 
 ```bash
-STATE_JSON=$($SESSION_CLI start \
+STATE_JSON=$(session start \
   --session-id "$SESSION_ID" \
   --start-head "$START_HEAD" \
   --started-at "$STARTED_AT" 2>/dev/null || echo '{}')
@@ -218,7 +221,7 @@ You compute this — no CLI call needed; you have all the inputs from accumulate
 ### Phase 6 — Collect end state + render summary
 
 ```bash
-END_JSON=$($SESSION_CLI end \
+END_JSON=$(session end \
   --session-id "$SESSION_ID" \
   --start-head "$START_HEAD" \
   --started-at "$STARTED_AT" \

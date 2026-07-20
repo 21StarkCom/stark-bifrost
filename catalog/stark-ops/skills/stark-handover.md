@@ -2,7 +2,7 @@
 name: stark-handover
 type: skill
 description: 'Use when pausing or splitting work across sessions — before /clear, when context runs low, end of day, switching tasks — or when resuming after one. Triggers: "handover", "handoff", "save context", "save progress", "resume", "continue where we left off", "what was I doing". Persists a numbered handover chain + PROGRESS.md tracker per task; resume needs no recap.'
-version: 0.2.2
+version: 0.2.3
 maturity: beta
 runtimes:
   - claude
@@ -30,7 +30,10 @@ of a handover is what you mine from the conversation, which only you have.
 
 ```bash
 TOOLS="${CLAUDE_PLUGIN_ROOT:-$HOME/.claude/code-review}/tools"
-HANDOVER_CLI="node --experimental-strip-types --no-warnings $TOOLS/stark_handover.ts"
+# A function, not a string var: zsh does NOT word-split `$VAR`, so a
+# multi-word command stuffed in a variable is run as one bogus command name.
+# Define this in the SAME Bash call that uses it (shells don't persist across calls).
+handover() { node --experimental-strip-types --no-warnings "$TOOLS/stark_handover.ts" "$@"; }
 ```
 
 ## Arguments
@@ -56,7 +59,7 @@ HANDOVER_CLI="node --experimental-strip-types --no-warnings $TOOLS/stark_handove
 ### Phase 1 — Resolve storage context
 
 ```bash
-$HANDOVER_CLI resolve            # or: resolve --task "<slug>"
+handover resolve            # or: resolve --task "<slug>"
 ```
 
 Pick the task slug, in order: `--task` from arguments → the `task` field from
@@ -101,7 +104,7 @@ Write both to temp files, following the templates **exactly**
 ```bash
 HB=$(mktemp -t stark-handover-body) && PB=$(mktemp -t stark-handover-progress)
 # Write handover body to $HB and progress to $PB, then:
-$HANDOVER_CLI save --task "<slug>" --handover-file "$HB" --progress-file "$PB"
+handover save --task "<slug>" --handover-file "$HB" --progress-file "$PB"
 ```
 
 ### Phase 4 — Report + the loop prompt
@@ -122,10 +125,10 @@ reporting if thin. Then tell the user:
 ### Phase 1 — Load
 
 ```bash
-$HANDOVER_CLI resume             # or: resume --task "<slug>"
+handover resume             # or: resume --task "<slug>"
 ```
 
-Exit 2 → nothing to resume: say so, show `$HANDOVER_CLI list`, ask what to
+Exit 2 → nothing to resume: say so, show `handover list`, ask what to
 work on. Otherwise the JSON carries `handover_content` (latest in chain),
 `progress_content`, `chain`, `task_slugs`.
 
@@ -150,7 +153,7 @@ first step; ask exactly those.
 ## Status Mode
 
 ```bash
-$HANDOVER_CLI list               # --all for every project/worktree
+handover list               # --all for every project/worktree
 ```
 
 Render as a table: task, latest seq, last activity, has tracker. Suggest

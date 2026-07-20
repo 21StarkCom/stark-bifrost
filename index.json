@@ -620,7 +620,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "runtimes": [
         "claude",
         "codex"
@@ -645,7 +645,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "runtimes": [
         "claude",
         "codex"
@@ -670,7 +670,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "runtimes": [
         "claude",
         "codex"
@@ -679,7 +679,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:b1a21e19fad1a665e255e73967699f5fa4526a5c9b764182a8ccbe18ff5f0773"
+      "digest": "sha256:c40f9f98860b26e10f64ca1f910f6bd4469624fc37832408a6e56741d1cd1ce6"
     },
     {
       "name": "stark-housekeeping",
@@ -695,7 +695,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "runtimes": [
         "claude",
         "codex"
@@ -720,7 +720,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "runtimes": [
         "claude",
         "codex"
@@ -745,7 +745,7 @@
       ],
       "category": "ops",
       "maturity": "beta",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "runtimes": [
         "claude",
         "codex"
@@ -754,7 +754,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:d2d859166d7347dd02f6a7b6878892c9028a0ecc0f2496d50d5751300b7a78cc"
+      "digest": "sha256:e5e8a4b34ddc3e3046c3cbf28d62bb3a2d71701df3b7bfb9d3f054e151cd3010"
     },
     {
       "name": "stark-plan-to-tasks",
