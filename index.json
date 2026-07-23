@@ -571,7 +571,7 @@
       ],
       "category": "implementation",
       "maturity": "beta",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "runtimes": [
         "claude",
         "codex"
@@ -580,7 +580,7 @@
         "claude": "native",
         "codex": "native"
       },
-      "digest": "sha256:9fcc73fcd1c6fa0810157ed2a3c6a1a5c2a5f132f3304891a594496470f4cbd4"
+      "digest": "sha256:0c386ebdb07fa376aff41803721b99ae348360b743d791f0f01db2844f81088d"
     },
     {
       "name": "stark-phase-execute",
@@ -595,7 +595,7 @@
       ],
       "category": "implementation",
       "maturity": "beta",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "runtimes": [
         "claude",
         "codex"
