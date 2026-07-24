@@ -30,6 +30,8 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 import { assetConfigPath } from "./asset_root_lib.ts";
+import { applyClaudeAuth } from "./claude_auth_lib.ts";
+import { geminiAuthSettings, resolveGeminiAuthMode } from "./gemini_auth_lib.ts";
 import { resolveVertexLocation, resolveVertexProject } from "./vertex_config_lib.ts";
 
 // Constants ---------------------------------------------------------------
@@ -452,14 +454,9 @@ export async function buildAgentEnv(
   }
 
   if (agent === "claude") {
-    const sourceKey = process.env["ANTHROPIC_AGENTS"];
-    if (!sourceKey) {
-      throw new Error(
-        "ANTHROPIC_AGENTS not set in environment. Source your Anthropic key file " +
-          "(e.g. `source \"$HOME/Code/.private/API Keys/.anthropic.key\"`) before dispatching claude.",
-      );
-    }
-    env["ANTHROPIC_API_KEY"] = sourceKey;
+    // Subscription mode (default) leaves ANTHROPIC_API_KEY absent — the CLI
+    // uses the logged-in account's OAuth creds; api mode injects the key.
+    applyClaudeAuth(env, { require: true });
   } else {
     delete env["ANTHROPIC_API_KEY"];
   }
@@ -536,17 +533,13 @@ export function setupGeminiHome(
     }
   }
 
-  const project = resolveVertexProject();
-  const vertexAi: Record<string, string> = { region: resolveVertexLocation() };
-  if (project) vertexAi.projectId = project;
+  const auth = geminiAuthSettings(resolveGeminiAuthMode(), {
+    projectId: resolveVertexProject() ?? undefined,
+    region: resolveVertexLocation(),
+  });
   const settings: Record<string, unknown> = {
-    security: {
-      auth: {
-        selectedType: "vertex-ai",
-        vertexAi,
-      },
-    },
-    selectedAuthType: "vertex-ai",
+    security: { auth },
+    selectedAuthType: auth.selectedType,
   };
   if (approvalMode) settings["defaultApprovalMode"] = approvalMode;
   writeFileSync(path.join(geminiDir, "settings.json"), JSON.stringify(settings));
@@ -570,12 +563,20 @@ export function makeGeminiEnv(
   }
   env["GEMINI_CLI_HOME"] = geminiHome;
   if (opts.trustWorkspace) env["GEMINI_CLI_TRUST_WORKSPACE"] = "true";
-  env["GOOGLE_GENAI_USE_VERTEXAI"] = "true";
   const vertexProject = resolveVertexProject();
   if (vertexProject) env["GOOGLE_CLOUD_PROJECT"] = vertexProject;
-  env["GOOGLE_CLOUD_LOCATION"] = resolveVertexLocation();
-  if (!env["GOOGLE_APPLICATION_CREDENTIALS"] && existsSync(DEFAULT_ADC_PATH)) {
-    env["GOOGLE_APPLICATION_CREDENTIALS"] = DEFAULT_ADC_PATH;
+  if (resolveGeminiAuthMode() === "vertex") {
+    env["GOOGLE_GENAI_USE_VERTEXAI"] = "true";
+    env["GOOGLE_CLOUD_LOCATION"] = resolveVertexLocation();
+    if (!env["GOOGLE_APPLICATION_CREDENTIALS"] && existsSync(DEFAULT_ADC_PATH)) {
+      env["GOOGLE_APPLICATION_CREDENTIALS"] = DEFAULT_ADC_PATH;
+    }
+  } else {
+    // oauth / api-key: Vertex env overrides the settings.json auth type
+    // inside the CLI — keep it out. GOOGLE_CLOUD_PROJECT stays (Code
+    // Assist licensing resolves through it in oauth mode).
+    delete env["GOOGLE_GENAI_USE_VERTEXAI"];
+    delete env["GOOGLE_APPLICATION_CREDENTIALS"];
   }
   return env;
 }
