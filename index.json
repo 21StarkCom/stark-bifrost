@@ -571,7 +571,7 @@
       ],
       "category": "implementation",
       "maturity": "beta",
-      "version": "0.1.7",
+      "version": "0.1.9",
       "runtimes": [
         "claude",
         "codex"
@@ -595,7 +595,7 @@
       ],
       "category": "implementation",
       "maturity": "beta",
-      "version": "0.1.7",
+      "version": "0.1.9",
       "runtimes": [
         "claude",
         "codex"
